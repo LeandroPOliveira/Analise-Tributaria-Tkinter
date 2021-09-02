@@ -14,52 +14,106 @@ class Analise:
         self.mainframe = Frame(self.janela, width=1200, height=680, relief=RIDGE, bg='sky blue')
         self.mainframe.place(x=0, y=0)
 
-        info_frame = Frame(self.mainframe, width=1200, height=480, relief=RIDGE, bd=5)
-        info_frame.place(x=0, y=0)
+        info_frame = Frame(self.mainframe, width=1200, height=260, relief=RIDGE, bd=7)
+        info_frame.place(x=0, y=30)
+        info_frame2 = Frame(self.mainframe, width=1200, height=260, relief=RIDGE, bd=7)
+        info_frame2.place(x=0, y=300)
         self.fonte = ('arial', 12, 'bold')
 
-        self.rotulos = ['Gerência Contratante: ', 'Nº Processo: ', 'Requisição de Compras: ', 'Código Material/Serviço:',
+        self.rotulos = ['Gerência Contratante: ', 'Nº Processo GECBS: ', 'Requisição de Compras: ', 'Código Material/Serviço:',
                    'Consta no Orçamento?', 'Sim', 'Não', '1.	Classificação Contábil:',
                    '1.	Objeto de Custos:', 'Serviço', 'Material ', 'Serviço com Fornecimento de Material']
 
         Label(info_frame, text='Gerência Contratante: ', font=self.fonte, bd=0).place(x=20, y=50)
-        Label(info_frame, text=self.rotulos[1], font=self.fonte, bd=0).place(x=20, y=90)
-        Label(info_frame, text=self.rotulos[2], font=self.fonte, bd=0).place(x=20, y=130)
-        Label(info_frame, text=self.rotulos[4], font=self.fonte, bd=0).place(x=20, y=170)
-        Label(info_frame, text=self.rotulos[3], font=self.fonte, bd=0).place(x=20, y=210)
-        Label(info_frame, text=self.rotulos[7][3:], font=self.fonte, bd=0).place(x=20, y=250)
-        Label(info_frame, text=self.rotulos[8][3:], font=self.fonte, bd=0).place(x=20, y=290)
-        Label(info_frame, text='Tipo de Análise: ', font=self.fonte, bd=0).place(x=20, y=330)
+        Label(info_frame, text='Nº Processo GECBS: ', font=self.fonte, bd=0).place(x=500, y=50)
+        Label(info_frame, text='Requisição de Compras: ', font=self.fonte, bd=0).place(x=20, y=90)
+        Label(info_frame, text='Consta no Orçamento?', font=self.fonte, bd=0).place(x=500, y=90)
+        Label(info_frame, text='Objeto de Custos:', font=self.fonte, bd=0).place(x=20, y=130)
+        Label(info_frame, text='Tipo de Análise: ', font=self.fonte, bd=0).place(x=500, y=130)
+        Label(info_frame2, text='Código Material/Serviço:', font=self.fonte, bd=0).place(x=20, y=20)
+        Label(info_frame2, text='Classificação Contábil ', font=self.fonte, bd=0).place(x=500, y=20)
+        # Label(info_frame, text='Valor Estimado: ', font=self.fonte, bd=0).place(x=520, y=380)
+        # Label(info_frame, text='Código IVA: ', font=self.fonte, bd=0).place(x=520, y=420)
 
         self.gere = Entry(info_frame, width=20, bd=4)
-        self.gere.place(x=230, y=45)
+        self.gere.place(x=230, y=48)
         self.gere.insert(0, 'GECOT')
         self.proc = Entry(info_frame, width=20, bd=4)
-        self.proc.place(x=230, y=85)
+        self.proc.place(x=700, y=50)
         self.proc.insert(0, 'DV-004/2021')
         self.req = Entry(info_frame, width=20, bd=4)
-        self.req.place(x=230, y=125)
+        self.req.place(x=230, y=88)
         self.req.insert(0, '10189080')
         self.orcam = ttk.Combobox(info_frame, font=self.fonte, width=12)
         self.orcam['values'] = ('Não', 'Sim')
         self.orcam.current(1)
-        self.orcam.place(x=230, y=165)
-        self.clascont = Entry(info_frame, width=20, bd=4)
-        self.clascont.place(x=230, y=205)
-        self.clascont.insert(0, '1011500')
-        self.codmat = Entry(info_frame, width=20, bd=4)
-        self.codmat.place(x=230, y=245)
-        self.codmat.insert(0, '4405')
+        self.orcam.place(x=700, y=88)
         self.objcust = Entry(info_frame, width=20, bd=4)
-        self.objcust.place(x=230, y=285)
-        self.objcust.insert(0, '11350')
+        self.objcust.place(x=230, y=128)
+        self.objcust.insert(0, 'PEP RSG.01.001.001.01')
         self.tipo = ttk.Combobox(info_frame, font=self.fonte, width=25)
         self.tipo['values'] = ('Serviço', 'Material', 'Serviço com Fornec de Mat')
         self.tipo.current(0)
-        self.tipo.place(x=230, y=325)
+        self.tipo.place(x=700, y=128)
+        self.codmat = Entry(info_frame2, width=20, bd=4)
+        self.codmat.place(x=230, y=20)
+        self.codmat.insert(0, '4405')
+        self.clascont = Entry(info_frame2, width=20, bd=4)
+        self.clascont.place(x=700, y=20)
+        self.clascont.insert(0, '1011500')
+        self.var1 = IntVar()
+        self.multiserv = Checkbutton(info_frame2, text='Múltiplos Serviços', variable=self.var1, onvalue=1,
+                                     offvalue=0, font=('arial', 12))
+        self.multiserv.place(x=100, y=55)
 
 
-        self.btngerar = Button(info_frame, font=self.fonte, text='Gerar PDF', bd=4, command=self.salvar).place(x=20, y=400)
+        self.objeto = Text(info_frame, width=50, height=5, bd=4, font='arial')
+        self.objeto.place(x=660, y=350)
+        self.objeto.insert('end', 'Serviços de reparo da infraestrutura de cabeamento de dados e telefonia do prédio '
+                              'administrativo da GasBrasiliano.')
+        self.valor = Entry(info_frame, width=20, bd=4)
+        self.valor.place(x=660, y=380)
+        self.valor.insert('end', 'R$ 44.072,64')
+        self.iva = Entry(info_frame, width=20, bd=4)
+        self.iva.place(x=660, y=420)
+        self.iva.insert(0, 'ZJ')
+
+
+
+
+
+        self.btn_tela_serv = Button(info_frame2, font=self.fonte, text='Avançar', bd=4,
+                                    command=self.tela_servicos).place(x=1000, y=160)
+
+    def tela_servicos(self):
+
+        servicos = Toplevel()
+        titulo = ' '
+        servicos.title(160 * titulo + 'Serviços')
+        servicos.geometry('1200x680+100+20')
+
+        self.serv_frame = Frame(servicos, width=1200, height=680, relief=RIDGE, bd=7, bg='floral white')
+        self.serv_frame.place(x=0, y=0)
+
+        # frame_1 = Frame(serv_frame, height=500, width=1190, bd=5).place(x=0, y=0)
+        Label(self.serv_frame, text='Codigo Serviço', font=self.fonte, bd=0).place(x=20, y=50)
+
+        self.serv = Text(self.serv_frame, width=70, height=7, bd=4, font='arial')
+        self.serv.place(x=150, y=50)
+        self.serv.insert('end', '17.01 Assessoria ou consultoria de qualquer natureza, não contida em outros itens '
+                                'desta lista; análise, exame, pesquisa, coleta, compilação e fornecimento de dados e '
+                                'informações de qualquer natureza, inclusive cadastro e similares.'
+                                'Sobre os serviços haverá as seguintes retenções tributárias: IR e PIS/COFINS/CSLL'
+                                'IRRF: serviços constam no artigo 714 RIR/2018.'
+                                'PCC:  serviços constam na IN SRF nº 459/2004, artigo 1º, § 2º.')
+
+
+
+
+
+        self.btngerar = Button(self.serv_frame, font=self.fonte, text='Gerar PDF', bd=4,
+                               command=self.salvar).place(x=100, y=400)
+
 
     def salvar(self):
 
@@ -80,10 +134,10 @@ class Analise:
         self.pdf.set_xy(75.0, 9.0)
         self.pdf.multi_cell(w=125, h=5, txt='Análise Contábil e Tributária para Processos de Licitação e ou Contratação Direta')
 
-        self.pdf.rect(5.0, 30.0, 200.0, 30.0)
-        self.pdf.rect(5.0, 40.0, 200.0, 10.0)
-        self.pdf.line(88.0, 30.0, 88.0, 60.0)
-        self.pdf.line(140.0, 30.0, 140.0, 40.0)
+        self.pdf.rect(5.0, 30.0, 200.0, 25.0)
+        self.pdf.line(5.0, 40.0, 205.0, 40.0)
+        self.pdf.line(88.0, 30.0, 88.0, 55.0)
+        # self.pdf.line(140.0, 30.0, 140.0, 40.0)
         self.pdf.set_xy(10.0, 25.0)
         self.pdf.cell(w=40, h=20, txt='Gerência Contratante:')
         self.pdf.set_xy(50.0, 25.0)
@@ -97,9 +151,9 @@ class Analise:
         self.pdf.set_xy(142.0, 26.5)
         self.pdf.cell(w=40, h=20, txt=self.req.get())
         self.pdf.set_xy(10.0, 35.0)
-        self.pdf.cell(w=40, h=20, txt='Código Material/Serviço:')
-        self.pdf.set_xy(53.0, 35.0)
-        self.pdf.cell(w=40, h=20, txt=self.req.get())
+        self.pdf.cell(w=40, h=20, txt='Objeto de Custos:')
+        self.pdf.set_xy(43.0, 42.5)
+        self.pdf.multi_cell(w=45, h=5, align='L', txt=self.objcust.get())
         self.pdf.set_xy(90.0, 35.0)
         self.pdf.cell(w=40, h=20, txt='Consta no Orçamento? ')
         self.pdf.set_xy(148.0, 35.0)
@@ -112,36 +166,37 @@ class Analise:
         else:
             self.pdf.set_xy(169.0, 35.0)
             self.pdf.cell(w=40, h=20, txt='X')
-        self.pdf.set_xy(10.0, 45.0)
-        self.pdf.cell(w=40, h=20, txt='1.   Classificação Contábil:  ')
-        self.pdf.set_xy(60.0, 45.0)
-        self.pdf.cell(w=40, h=20, txt=self.clascont.get())
-        self.pdf.set_xy(90.0, 45.0)
-        self.pdf.cell(w=40, h=20, txt='1.   Objeto de Custos:  ')
-        self.pdf.set_xy(140.0, 45.0)
-        self.pdf.cell(w=40, h=20, txt=self.objcust.get())
-        # self.pdf.set_xy(0.0, 0.0)
-        self.pdf.rect(5.0, 65.0, 200.0, 225.0)
-        self.pdf.line(5.0, 71.0, 205.0, 71.0)
-        self.pdf.set_xy(100.0, 58.0)
+        self.pdf.rect(5.0, 60.0, 200.0, 225.0)
+        self.pdf.line(5.0, 66.0, 205.0, 66.0)
+        self.pdf.set_xy(100.0, 53.0)
         self.pdf.cell(w=40, h=20, txt='ANÁLISE')
-        self.pdf.line(5.0, 80.0, 205.0, 80.0)
-        self.pdf.set_xy(10.0, 65.0)
-        self.pdf.set_xy(30.0, 65.0)
+        self.pdf.line(5.0, 75.0, 205.0, 75.0)
+        self.pdf.set_xy(30.0, 60.5)
         self.pdf.cell(w=40, h=20, txt='Serviço')
-        self.pdf.set_xy(90.0, 65.0)
+        self.pdf.set_xy(90.0, 60.5)
         self.pdf.cell(w=40, h=20, txt='Material')
-        self.pdf.set_xy(135.0, 65.0)
+        self.pdf.set_xy(135.0, 60.5)
         self.pdf.cell(w=40, h=20, txt='Serviço com Fornecimento de Material')
         if self.tipo.current() == 0:
-            self.pdf.set_xy(25.0, 65.0)
+            self.pdf.set_xy(25.0, 60.5)
             self.pdf.cell(w=40, h=20, txt='X')
         elif self.tipo.current() == 1:
-            self.pdf.set_xy(85.0, 65.0)
+            self.pdf.set_xy(85.0, 60.5)
             self.pdf.cell(w=40, h=20, txt='X')
         else:
             self.pdf.set_xy(130.0, 65.0)
             self.pdf.cell(w=40, h=20, txt='X')
+        self.pdf.set_xy(10.0, 77.0)
+        self.pdf.cell(w=40, h=5, txt='Objeto: ')
+        self.pdf.set_xy(30.0, 77.0)
+        self.pdf.multi_cell(w=160, h=5, txt=self.objeto.get(1.0, 'end'))
+        self.pdf.set_xy(10.0, self.pdf.get_y()+5)
+        self.pdf.cell(w=40, h=5, txt='Valor estimado: ', border=1)
+        self.pdf.set_xy(40.0, self.pdf.get_y())
+        self.pdf.cell(w=40, h=5, txt=self.valor.get())
+        self.pdf.set_xy(15.0, self.pdf.get_y()+10)
+        self.pdf.multi_cell(w=180, h=5, txt=self.serv.get(1.0, 'end'))
+        self.pdf.set_xy(15.0, self.pdf.get_y() + 10)
 
 
         print(self.pdf.get_y())
