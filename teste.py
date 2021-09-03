@@ -21,11 +21,11 @@ col_width = epw / 3
 # Since we do not need to draw lines anymore, there is no need to separate
 # headers from data matrix.
 
-data = [['CÓDIGO', 'DESCRIÇÃO', 'C.C'],
-        ['3002140', 'REMOÇÃO DE TELHAS DA EDIFICAÇÃO EXISTENTE', '4508'],
-        ['3002141', 'AMPLIAÇÃO CIVIL DA EDIFICAÇÃO EXISTENTE - FUNDAÇÃO', '4508'],
-        ['3002141', 'AMPLIAÇÃO CIVIL DA EDIFICAÇÃO EXISTENTE - PISO CONCRETO', '4508'],
-        ['3002146', 'ACABAMENTO IMPERMEABILIZAÇÃO E PINTURA: ESQUADRIAS, PISO, PAREDE -INTERNA E EXTERNA E CALÇADAS',
+data = [['DESCRIÇÃO', 'CÓDIGO', 'C.C'],
+        ['REMOÇÃO DE TELHAS DA EDIFICAÇÃO EXISTENTE', '3002140', '4508'],
+        ['AMPLIAÇÃO CIVIL DA EDIFICAÇÃO EXISTENTE - FUNDAÇÃO', '3002141', '4508'],
+        ['AMPLIAÇÃO CIVIL DA EDIFICAÇÃO EXISTENTE - PISO CONCRETO', '3002141', '4508'],
+        ['ACABAMENTO IMPERMEABILIZAÇÃO E PINTURA: ESQUADRIAS, PISO, PAREDE -INTERNA E EXTERNA E CALÇADAS', '3002146',
         '4508']]
 
 
@@ -34,28 +34,30 @@ data = [['CÓDIGO', 'DESCRIÇÃO', 'C.C'],
 # pdf.cell(epw, 0.0, 'With more padding', align='C')
 # pdf.set_font('Times', '', 10.0)
 # pdf.ln(0.5)
+data2 = ['CÓDIGO', 'DESCRIÇÃO', 'C.C']
 
-
-px = pdf.set_xy(10, 20)
+pdf.set_xy(10, 20)
+cont = 3
+px = 10
+py = 20
 for row in data:
-    cont = 3
-    px = pdf.set_xy(10, 20)
     for datum in row:
-        # Enter data in colums
-        if cont % 3 == 0 or cont % 5 == 0:
-
-            pdf.multi_cell(w=20, h=5, txt=datum, border=1)
+        if cont % 3 == 0:
+            pdf.set_xy(px + 20, py)
+            pdf.multi_cell(w=150, h=5, txt=datum, border=1)
+        elif cont % 4 == 0:
+            atual = pdf.get_y() - py
+            print(atual)
+            pdf.set_xy(px, py)
+            pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
         else:
-            px = pdf.set_xy(pdf.get_x(), pdf.get_y())
-            pdf.multi_cell(w=120, h=5, txt=datum, border=1)
-        pdf.set_x(pdf.get_x()+20 if cont % 3 == 0 or cont % 5 == 0 else pdf.set_x(pdf.get_x()+150))
+            atual = pdf.get_y() - py
+            pdf.set_xy(px+170, py)
+            pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
         cont += 1
-
-
-
-
-
-
+    px = 10
+    py += 5
+    cont = 3
 
 pdf.output('table-using-cell-borders.pdf', 'F')
 
