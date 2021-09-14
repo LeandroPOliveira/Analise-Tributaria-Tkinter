@@ -102,17 +102,84 @@ class Analise:
         self.serv.place(x=150, y=50)
         self.serv.insert('end', '17.01 Assessoria ou consultoria de qualquer natureza, não contida em outros itens '
                                 'desta lista; análise, exame, pesquisa, coleta, compilação e fornecimento de dados e '
-                                'informações de qualquer natureza, inclusive cadastro e similares.'
-                                'Sobre os serviços haverá as seguintes retenções tributárias: IR e PIS/COFINS/CSLL'
-                                'IRRF: serviços constam no artigo 714 RIR/2018.'
+                                'informações de qualquer natureza, inclusive cadastro e similares.\n'
+                                '\n'
+                                'Sobre os serviços haverá as seguintes retenções tributárias: \nIR e PIS/COFINS/CSLL'
+                                'IRRF: serviços constam no artigo 714 RIR/2018.\n'
                                 'PCC:  serviços constam na IN SRF nº 459/2004, artigo 1º, § 2º.')
 
+        lista = [[], [], []]
+        dataset = [[], [], []]
+        # múltiplos serviços
+        px = 30
+        py = 240
+        for i in range(10):
+            for c in range(3):
+                serv = Entry(self.serv_frame, width=15, bd=4, font='arial')
+                serv.place(x=px, y=py)
+                lista[c].append(serv)
+                px += 150
+            py += 35
+            px = 30
 
+        def colar(ev):
+            rows = servicos.clipboard_get().split('\n')
+            for r, row in enumerate(rows):
+                values = row.split('\t')
+                dataset.append(values)
+                for b, value in enumerate(values):
+                    
+                    # lista[b][r].delete(0, END)
+                    # lista[b][r].insert(0, value)
+            print(dataset)
+
+        def limpar():
+            lista.clear()
+
+        self.btnlimpar = Button(self.serv_frame, font=self.fonte, text='Limpar campos', bd=4,
+                               command=limpar).place(x=500, y=500)
+
+        servicos.bind_all("<<Paste>>", colar)
+
+        # epw = pdf.w - 2 * pdf.l_margin
+        # col_width = epw / 3
+        # data2 = ['CÓDIGO', 'DESCRIÇÃO', 'C.C']
+
+        self.data = [['DESCRIÇÃO', 'CÓDIGO', 'C.C'],
+                ['REMOÇÃO DE TELHAS DA EDIFICAÇÃO EXISTENTE', '3002140', '4508'],
+                ['AMPLIAÇÃO CIVIL DA EDIFICAÇÃO EXISTENTE - FUNDAÇÃO', '3002141', '4508'],
+                ['AMPLIAÇÃO CIVIL DA EDIFICAÇÃO EXISTENTE - PISO CONCRETO', '3002141', '4508'],
+                ['ACABAMENTO IMPERMEABILIZAÇÃO E PINTURA: ESQUADRIAS, PISO, PAREDE -INTERNA E EXTERNA E CALÇADAS',
+                 '3002146',
+                 '4508']]
+
+        self.pdf.set_xy(10, 20)
+        cont = 3
+        px = 10
+        py = 20
+        for row in self.data:
+            for datum in row:
+                if cont % 3 == 0:
+                    self.pdf.set_xy(px + 20, py)
+                    self.pdf.multi_cell(w=150, h=5, txt=datum, border=1)
+                elif cont % 4 == 0:
+                    atual = self.pdf.get_y() - py
+                    print(atual)
+                    self.pdf.set_xy(px, py)
+                    self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
+                else:
+                    atual = self.pdf.get_y() - py
+                    self.pdf.set_xy(px + 170, py)
+                    self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
+                cont += 1
+            px = 10
+            py += 5
+            cont = 3
 
 
 
         self.btngerar = Button(self.serv_frame, font=self.fonte, text='Gerar PDF', bd=4,
-                               command=self.salvar).place(x=100, y=400)
+                               command=self.salvar).place(x=100, y=600)
 
 
     def salvar(self):
@@ -209,3 +276,4 @@ if __name__=='__main__':
     janela = Tk()
     aplicacao = Analise(janela)
     janela.mainloop()
+
