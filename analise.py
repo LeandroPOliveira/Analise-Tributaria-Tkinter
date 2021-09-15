@@ -1,6 +1,7 @@
 from fpdf import FPDF
 from tkinter import *
 from tkinter import ttk
+from operator import itemgetter
 
 class Analise:
 
@@ -109,7 +110,7 @@ class Analise:
                                 'PCC:  serviços constam na IN SRF nº 459/2004, artigo 1º, § 2º.')
 
         lista = [[], [], []]
-        dataset = [[], [], []]
+        self.data = [['DESCRIÇÃO', 'CÓDIGO', 'C.C']]
         # múltiplos serviços
         px = 30
         py = 240
@@ -122,19 +123,25 @@ class Analise:
             py += 35
             px = 30
 
+
+
         def colar(ev):
             rows = servicos.clipboard_get().split('\n')
             for r, row in enumerate(rows):
                 values = row.split('\t')
-                dataset.append(values)
+                ordem = [1, 0, 2]
+                values = [values[i] for i in ordem]
+                self.data.append(values)
                 for b, value in enumerate(values):
-                    
-                    # lista[b][r].delete(0, END)
-                    # lista[b][r].insert(0, value)
-            print(dataset)
+                    lista[b][r].delete(0, END)
+                    lista[b][r].insert(0, value)
+
+
 
         def limpar():
-            lista.clear()
+            self.data.clear()
+            servicos.clipboard_clear()
+
 
         self.btnlimpar = Button(self.serv_frame, font=self.fonte, text='Limpar campos', bd=4,
                                command=limpar).place(x=500, y=500)
@@ -145,36 +152,10 @@ class Analise:
         # col_width = epw / 3
         # data2 = ['CÓDIGO', 'DESCRIÇÃO', 'C.C']
 
-        self.data = [['DESCRIÇÃO', 'CÓDIGO', 'C.C'],
-                ['REMOÇÃO DE TELHAS DA EDIFICAÇÃO EXISTENTE', '3002140', '4508'],
-                ['AMPLIAÇÃO CIVIL DA EDIFICAÇÃO EXISTENTE - FUNDAÇÃO', '3002141', '4508'],
-                ['AMPLIAÇÃO CIVIL DA EDIFICAÇÃO EXISTENTE - PISO CONCRETO', '3002141', '4508'],
-                ['ACABAMENTO IMPERMEABILIZAÇÃO E PINTURA: ESQUADRIAS, PISO, PAREDE -INTERNA E EXTERNA E CALÇADAS',
-                 '3002146',
-                 '4508']]
 
-        self.pdf.set_xy(10, 20)
-        cont = 3
-        px = 10
-        py = 20
-        for row in self.data:
-            for datum in row:
-                if cont % 3 == 0:
-                    self.pdf.set_xy(px + 20, py)
-                    self.pdf.multi_cell(w=150, h=5, txt=datum, border=1)
-                elif cont % 4 == 0:
-                    atual = self.pdf.get_y() - py
-                    print(atual)
-                    self.pdf.set_xy(px, py)
-                    self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
-                else:
-                    atual = self.pdf.get_y() - py
-                    self.pdf.set_xy(px + 170, py)
-                    self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
-                cont += 1
-            px = 10
-            py += 5
-            cont = 3
+
+
+
 
 
 
@@ -265,11 +246,60 @@ class Analise:
         self.pdf.multi_cell(w=180, h=5, txt=self.serv.get(1.0, 'end'))
         self.pdf.set_xy(15.0, self.pdf.get_y() + 10)
 
+        self.pdf.set_auto_page_break(True, 23.0)
 
         print(self.pdf.get_y())
 
+        def cria_tabela(data):
+            self.pdf.set_xy(10, self.pdf.get_y())
+            cont_lista = 0
+            cont = 3
+            px = 10
+            py = self.pdf.get_y()
+            # while self.pdf.get_y() < 274:
+            for row in data:
+                for datum in row:
+                    if cont % 3 == 0:
+                        self.pdf.set_xy(px + 20, py)
+                        self.pdf.multi_cell(w=150, h=5, txt=datum, border=1)
+                    elif cont % 4 == 0:
+                        atual = self.pdf.get_y() - py
+                        self.pdf.set_xy(px, py)
+                        self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
+                    else:
+                        atual = self.pdf.get_y() - py
+                        self.pdf.set_xy(px + 170, py)
+                        self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
+                    cont += 1
+                px = 10
+                py = self.pdf.get_y()
+                cont = 3
+                cont_lista += 1
+                print(py)
+                if py > 270:
+                    self.dados_faltantes = data[cont_lista:]
+                    self.pdf.add_page()
+                    break
+
+            cria_tabela(self.data)
+
+            if self.dados_faltantes:
+                self.cria_tabela(self.dados_faltantes)
+            else:
+                pass
+
+
+
+        print(self.dados_faltantes)
+
+            # self.pdf2 = self.pdf.add_page()
+            # self.pdf2.cell(w=40, h=5, txt='Objeto: ')
+            # self.pdf.set_xy(40.0, 50.0)
+
+
 
         self.pdf.output('teste.pdf', 'F')
+
 
 
 if __name__=='__main__':
