@@ -3,6 +3,7 @@ from tkinter import *
 from tkinter import ttk
 from tkinter.tix import *
 from csv import reader
+from tkscrolledframe import ScrolledFrame
 
 class Analise:
 
@@ -55,7 +56,7 @@ class Analise:
         self.objcust.insert(0, 'PEP RSG.01.001.001.01')
         self.tipo = ttk.Combobox(info_frame, font=self.fonte, width=25)
         self.tipo['values'] = ('Serviço', 'Material', 'Serviço com Fornec de Mat')
-        self.tipo.current(0)
+        self.tipo.current(1)
         self.tipo.place(x=700, y=128)
         self.codmat = Entry(info_frame2, width=20, bd=4)
         self.codmat.place(x=230, y=20)
@@ -160,9 +161,14 @@ class Analise:
 
         self.pdf.set_auto_page_break(True, 20.0)
 
+        def abre_tela():
+            if self.tipo.get() == 'Serviço':
+                self.tela_servicos()
+            else:
+                self.tela_materiais()
 
         self.btn_tela_serv = Button(info_frame2, font=self.fonte, text='Avançar', bd=4,
-                                    command=self.tela_servicos).place(x=1000, y=160)
+        command=abre_tela).place(x=1000, y=160)
 
     def tela_servicos(self):
 
@@ -209,6 +215,10 @@ class Analise:
             py += 35
             px = 150
 
+        self.pdf.multi_cell(w=180, h=5, txt=self.serv.get(1.0, 'end'))
+        self.pdf.set_xy(15.0, self.pdf.get_y() + 10)
+
+
         def colar(ev):
             rows = self.servicos.clipboard_get().split('\n')
             rows.pop()
@@ -241,8 +251,7 @@ class Analise:
             for lin in self.entradas:
                 lin.delete(0, END)
 
-            self.pdf.multi_cell(w=180, h=5, txt=self.serv.get(1.0, 'end'))
-            self.pdf.set_xy(15.0, self.pdf.get_y() + 10)
+
 
             self.pdf.set_auto_page_break(True, 20.0)
 
@@ -303,8 +312,10 @@ class Analise:
                     px = 10
                     py = self.pdf.get_y()
                     cont = 3
+
             else:
                 pass
+
 
         def limpar():
             self.data.clear()
@@ -330,43 +341,251 @@ class Analise:
         self.avancar = Button(self.serv_frame, font=self.fonte, text='Avançar', bd=4,
                                command=self.contratos).place(x=1100, y=600)
 
+    def tela_materiais(self):
+        self.materiais = Toplevel()
+        titulo = ' '
+        self.materiais.title(160 * titulo + 'Materiais')
+        self.materiais.geometry('1200x680+100+20')
+
+        self.mat_frame = Frame(self.materiais, width=1200, height=680, relief=RIDGE, bd=7, bg='floral white')
+        self.mat_frame.place(x=0, y=0)
+
+        # frame_1 = Frame(serv_frame, height=500, width=1190, bd=5).place(x=0, y=0)
+        Label(self.mat_frame, text='Informações Tributárias', font=self.fonte, bd=0).place(x=20, y=50)
+
+
+
+        lista_mat = [[], [], [], [], [], [], [], []]
+        self.entradas_mat = []
+        self.data_mat = [['CÓDIGO', 'DESCRIÇÃO', 'IVA', 'NCM', 'ICMS', 'IPI', 'PIS', 'COFINS']]
+        self.mat_check = []
+
+        px = 550
+        for f, zebra in enumerate(self.data_mat[0][2:]):
+            print(zebra)
+            self.mat_check.append(IntVar())
+            check2 = Checkbutton(self.mat_frame, variable=self.mat_check[f], onvalue=1,
+                                 offvalue=0, bd=0, font=('arial', 14))
+            check2.place(x=px, y=170)
+            px = px + 75 if f == 1 else + px + 65
+
+
+        # múltiplos materiais
+        px = 150
+        py = 200
+        for i in range(10):
+            for c in range(8):
+                if c == 1:
+                    largura = 30
+                    espaco = 280
+                elif c == 0:
+                    largura = 10
+                    espaco = 100
+                elif c == 3:
+                    largura = 10
+                    espaco = 100
+                else:
+                    largura = 5
+                    espaco = 55
+                mater = Entry(self.mat_frame, width=largura, bd=4, font='arial')
+                mater.place(x=px, y=py)
+                self.entradas_mat.append(mater)
+                lista_mat[c].append(mater)
+                px += espaco
+            py += 30
+            px = 150
+
+
+
+
+        def colar(ev):
+            rows = self.materiais.clipboard_get().split('\n')
+            rows.pop()
+            for r, row in enumerate(rows):
+                values = row.split('\t')
+                if len(values) == 1:
+                    for b, value in enumerate(values):
+                        if lista_mat[0] == '':
+                            b += 1
+                            lista_mat[b][r].delete(0, END)
+                            lista_mat[b][r].insert(0, value)
+                    else:
+                        for b, value in enumerate(values):
+                            lista_mat[b][r].delete(0, END)
+                            lista_mat[b][r].insert(0, value)
+        def adicionar():
+            cont2 = 0
+            mat_list = []
+            for lin in self.entradas_mat:
+                if lin.get() != '':
+                    mat_list.append(lin.get())
+
+                    cont2 += 1
+                    if cont2 == 8:
+                        lista_nova_mat = mat_list.copy()
+                        self.data_mat.append(lista_nova_mat)
+                        mat_list.clear()
+                        cont2 = 0
+            for lin in self.entradas_mat:
+                lin.delete(0, END)
+
+            self.pdf.set_auto_page_break(True, 20.0)
+
+            print(self.data_mat)
+            self.dados_faltantes = []
+            # def cria_tabela(data):
+            self.pdf.set_xy(10, self.pdf.get_y())
+            cont_lista = 0
+            cont = 1
+            px = 10
+            py = self.pdf.get_y()
+            # while self.pdf.get_y() < 274:
+            for row in self.data_mat:
+                for datum in row:
+                    if cont == 1:
+                        self.pdf.set_font('') if cont_lista != 0 else self.pdf.set_font('Arial', 'B', 10)
+                        self.pdf.set_xy(px, py)
+                        self.pdf.multi_cell(w=20, h=5, txt=datum, border=1)
+                    elif cont == 2:
+                        self.pdf.set_xy(px + 20, py)
+                        self.pdf.multi_cell(w=75, h=5, txt=datum, border=1)
+                    elif cont == 3:
+                        self.pdf.set_xy(px + 95, py)
+                        self.pdf.multi_cell(w=10, h=5, txt=datum, border=1)
+                    elif cont == 4:
+                        self.pdf.set_xy(px + 105, py)
+                        self.pdf.multi_cell(w=20, h=5, txt=datum, border=1)
+                    else:
+                        self.pdf.set_xy(px + 125, py)
+                        px += 16
+                        self.pdf.multi_cell(w=16, h=5, txt=datum, border=1)
+                    cont += 1
+                px = 10
+                py = self.pdf.get_y()
+                cont = 1
+                cont_lista += 1
+                if py > 270:
+                    self.dados_faltantes = self.data_mat[cont_lista:]
+                    self.pdf.add_page()
+                    self.pdf.rect(5.0, 5.0, 200.0, 267.0)
+                    break
+
+            if self.dados_faltantes:
+                self.dados_faltantes.insert(0, ['DESCRIÇÃO', 'CÓDIGO', 'C.C'])
+                cont = 3
+                px = 10
+                py = self.pdf.get_y()
+                # while self.pdf.get_y() < 274:
+                for row in self.dados_faltantes:
+                    for datum in row:
+                        if cont % 3 == 0:
+                            self.pdf.set_xy(px + 20, py)
+                            self.pdf.multi_cell(w=150, h=5, txt=datum, border=1)
+                        elif cont % 4 == 0:
+                            atual = self.pdf.get_y() - py
+                            self.pdf.set_xy(px, py)
+                            self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
+                        else:
+                            atual = self.pdf.get_y() - py
+                            self.pdf.set_xy(px + 170, py)
+                            self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
+                        cont += 1
+                    px = 10
+                    py = self.pdf.get_y()
+                    cont = 3
+
+            else:
+                pass
+
+        def limpar():
+            self.data.clear()
+            for lin in self.entradas:
+                lin.delete(0, END)
+
+        self.materiais.bind_all("<<Paste>>", colar)
+
+        # epw = pdf.w - 2 * pdf.l_margin
+        # col_width = epw / 3
+        # data2 = ['CÓDIGO', 'DESCRIÇÃO', 'C.C']
+
+        self.btngerar = Button(self.mat_frame, font=self.fonte, text='Gerar PDF', bd=4,
+                               command=self.salvar).place(x=1000, y=600)
+
+        self.btnadicionar = Button(self.mat_frame, font=self.fonte, text='Adicionar', bd=4,
+                                   command=adicionar).place(x=200, y=600)
+
+        self.btnlimpar = Button(self.mat_frame, font=self.fonte, text='Limpar campos', bd=4,
+                                command=limpar).place(x=400, y=600)
+
+        self.avancar = Button(self.mat_frame, font=self.fonte, text='Avançar', bd=4,
+                              command=self.contratos).place(x=1100, y=600)
+
     def contratos(self):
-        self.servicos.destroy()
+        try:
+            self.servicos.destroy()
+        except:
+            self.materiais.destroy()
+
         self.contratos = Toplevel()
         titulo = ' '
         self.contratos.title(160 * titulo + 'Serviços')
         self.contratos.geometry('1200x680+100+20')
 
-        self.cont_frame = Frame(self.contratos, width=1200, height=680, relief=RIDGE, bd=7, bg='floral white')
-        self.cont_frame.pack(fill=BOTH, expand=1)
-        self.scroll = Scrollbar(self.cont_frame, orient=VERTICAL)
-        self.scroll.pack(side=RIGHT, fill=Y)
+        # self.cont_frame = Frame(self.contratos, width=1200, height=680, relief=RIDGE, bd=7, bg='floral white')
+        # self.cont_frame.pack(fill=BOTH, expand=1)
 
+        sf = ScrolledFrame(self.contratos, width=940, height=480)
+        sf.pack(side="top", expand=1, fill="both")
 
-        self.info_lbl = Label(self.cont_frame, bd=0, bg='floral white', font=('arial', 14),
-                              text='Informações contratuais: ').place(x=30, y=50)
+        # Bind the arrow keys and scroll wheel
+        sf.bind_arrow_keys(self.contratos)
+        sf.bind_scroll_wheel(self.contratos)
 
-        with open('clausulas.csv', 'r') as read_obj:
-            csv_reader = reader(read_obj)
-            px, py = 200, 100
+        # Create a frame within the ScrolledFrame
+        inner_frame = sf.display_widget(Frame)
+
+        # Add a bunch of widgets to fill some space
+        self.nomes = ['2.3.7.2.', '2.3.7', '2.3.7.1', '2.3.7.1.', '15.1', '2.3.7.2', '2.3.7.3', '2.3.7.4', '6.8.2']
+        self.var_check = []
+        linha = 3
+        for check in range(9):
+            self.var_check.append(IntVar())
+            check1 = Checkbutton(inner_frame, text=self.nomes[check], variable=self.var_check[check], onvalue=1, offvalue=0, bd=0, font=('arial', 14))
+            check1.grid(row=linha, column=1, padx=70)
+            linha += 2
+
+        self.info_lbl = Label(inner_frame, bd=0, bg='floral white', font=('arial', 14),
+                              text='Informações  contratuais: ').grid(row=2, column=2, pady=30)
+
+        with open('texto.txt', 'r', encoding='latin-1') as read_obj:
+            csv_reader = read_obj.readlines()
+            self.infos = []
+            linha = 2
             for row in csv_reader:
-                self.campo = Text(self.cont_frame, height=5, width=100)
-                self.campo.place(x=200, y=py)
+                Label(inner_frame).grid(row=linha, column=2)
+                self.campo = Text(inner_frame, height=5, width=100)
+                self.campo.grid(row=linha + 1, column=2)
                 self.campo.insert('end', row)
-                py += 120
-
-        self.cont_frame.config(yscrollcommand=self.scroll.set)
-        self.scroll.config(command=self.cont_frame.yview)
-
-        var1 = IntVar()
-        check1 = Checkbutton(self.cont_frame, text='6.7', variable=var1, onvalue=1, offvalue=0, bd=0, font=('arial', 14))
-        check1.place(x=50, y=100)
+                self.infos.append(self.campo)
+                linha += 2
 
 
-        self.btngerar = Button(self.cont_frame, font=self.fonte, text='Gerar PDF', bd=4,
-                               command=self.salvar).place(x=1000, y=600)
+
+
+        self.btngerar = Button(inner_frame, font=self.fonte, text='Gerar PDF', bd=4,
+                               command=self.salvar).grid(row=27, column=2, pady=30)
+
+
 
     def salvar(self):
+        print(self.pdf.get_y())
+        for i, item in enumerate(self.var_check):
+            if item.get() == 1:
+                self.pdf.set_xy(15.0, self.pdf.get_y()+5)
+                self.pdf.multi_cell(w=180, h=5, align='L', txt=self.infos[i].get(1.0, 'end'))
+                if self.pdf.get_y() > 270:
+                    self.pdf.add_page()
+                    self.pdf.rect(5.0, 5.0, 200.0, 267.0)
 
         self.pdf.output('teste.pdf', 'F')
 
