@@ -6,6 +6,7 @@ from csv import reader
 from tkscrolledframe import ScrolledFrame
 import pandas as pd
 from datetime import date
+from tkinter import messagebox
 
 class Analise:
 
@@ -411,6 +412,14 @@ class Analise:
         self.mat_frame.place(x=0, y=0)
 
         # frame_1 = Frame(serv_frame, height=500, width=1190, bd=5).place(x=0, y=0)
+        Label(self.mat_frame, text='Codigo', font=('arial', 10, 'bold'), bd=0).place(x=80, y=175)
+        Label(self.mat_frame, text='Descrição', font=('arial', 10, 'bold'), bd=0).place(x=260, y=175)
+        Label(self.mat_frame, text='IVA', font=('arial', 10, 'bold'), bd=0).place(x=455, y=175)
+        Label(self.mat_frame, text='NCM', font=('arial', 10, 'bold'), bd=0).place(x=525, y=175)
+        Label(self.mat_frame, text='ICMS', font=('arial', 10, 'bold'), bd=0).place(x=600, y=175)
+        Label(self.mat_frame, text='IPI', font=('arial', 10, 'bold'), bd=0).place(x=670, y=175)
+        Label(self.mat_frame, text='PIS', font=('arial', 10, 'bold'), bd=0).place(x=720, y=175)
+        Label(self.mat_frame, text='COFINS', font=('arial', 10, 'bold'), bd=0).place(x=760, y=175)
         Label(self.mat_frame, text='Informações Tributárias', font=self.fonte, bd=0).place(x=20, y=50)
         Label(self.mat_frame, text='Obs. 1: ', font=self.fonte, bd=0).place(x=850, y=200)
         Label(self.mat_frame, text='Obs. 2: ', font=self.fonte, bd=0).place(x=850, y=350)
@@ -458,16 +467,19 @@ class Analise:
                 px += espaco
             py += 30
             px = 60
-        self.lista_check = []
-        px = 460
-        for f, check in enumerate(self.data_mat[0][2:]):
-            self.mat_check.append(IntVar())
-            self.check2 = Checkbutton(self.mat_frame, variable=self.mat_check[f], onvalue=1,
-                                 offvalue=0, bd=0, font=('arial', 14))
-            self.check2.place(x=px, y=170)
-            self.lista_check.append(self.check2)
 
-            px = px + 75 if f == 1 else + px + 65
+        self.check2 = IntVar()
+        self.check3 = IntVar()
+        self.check4 = IntVar()
+        self.check2 = Checkbutton(self.mat_frame, variable=self.check2, onvalue=1,
+                             offvalue=0, bd=0, font=('arial', 14))
+        self.check2.place(x=455, y=140)
+        self.check3 = Checkbutton(self.mat_frame, variable=self.check3, onvalue=1,
+                                  offvalue=0, bd=0, font=('arial', 14))
+        self.check3.place(x=530, y=140)
+        self.check4 = Checkbutton(self.mat_frame, variable=self.check4, onvalue=1,
+                                  offvalue=0, bd=0, font=('arial', 14))
+        self.check4.place(x=700, y=140)
 
 
         # self.multi
@@ -483,7 +495,7 @@ class Analise:
                         self.entradas_mat[e + 7].insert(0, '7,6%')
 
 
-        self.lista_check[4].bind('<Button>', preenche_aliq)
+        self.check4.bind('<Button>', preenche_aliq)
 
         def preenche_iva(ev):
             for e, item in enumerate(self.entradas_mat):
@@ -493,7 +505,7 @@ class Analise:
                         self.entradas_mat[e + 2].insert(0, self.entradas_mat[2].get())
 
 
-        self.lista_check[0].bind('<Button>', preenche_iva)
+        self.check2.bind('<Button>', preenche_iva)
 
         def preenche_ncm(ev):
             for e, item in enumerate(self.entradas_mat):
@@ -503,7 +515,7 @@ class Analise:
                         self.entradas_mat[e + 3].insert(0, self.entradas_mat[3].get())
 
 
-        self.lista_check[1].bind('<Button>', preenche_ncm)
+        self.check3.bind('<Button>', preenche_ncm)
 
 
 
@@ -544,7 +556,7 @@ class Analise:
             self.pdf.multi_cell(w=180, h=5, txt='Informações Tributárias: ')
 
 
-            print(self.data_mat)
+
             self.dados_faltantes = []
             # def cria_tabela(data):
             self.pdf.set_xy(10, self.pdf.get_y()+5)
@@ -625,19 +637,20 @@ class Analise:
         # col_width = epw / 3
         # data2 = ['CÓDIGO', 'DESCRIÇÃO', 'C.C']
 
-        self.btngerar = Button(self.mat_frame, font=self.fonte, text='Gerar PDF', bd=4,
-                               command=self.salvar).place(x=1000, y=600)
 
-        self.btnadicionar = Button(self.mat_frame, font=self.fonte, text='Adicionar', bd=4,
-                                   command=adicionar).place(x=200, y=600)
+        self.btnadicionar = Button(self.mat_frame, width=15, font=self.fonte, text='Adicionar', bd=4,
+                                   command=adicionar).place(x=250, y=550)
 
-        self.btnlimpar = Button(self.mat_frame, font=self.fonte, text='Limpar campos', bd=4,
-                                command=limpar).place(x=400, y=600)
+        self.btnlimpar = Button(self.mat_frame, width=15, font=self.fonte, text='Limpar campos', bd=4,
+                                command=limpar).place(x=450, y=550)
 
         self.avancar = Button(self.mat_frame, font=self.fonte, text='Avançar', bd=4,
                               command=self.contratos).place(x=1100, y=600)
 
     def contratos(self):
+        print(self.data_mat)
+        if self.data_mat[0] != '':
+            tkinter.messagebox.askyesno('', 'Não foi adicionado nenhum material, deseja continuar?')
         try:
             self.servicos.destroy()
         except:
