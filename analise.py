@@ -12,6 +12,8 @@ import glob
 from reportlab.pdfgen import canvas
 from PyPDF2 import PdfFileWriter, PdfFileReader
 import win32com.client as win32
+from openpyxl.reader.excel import load_workbook
+import pickle
 
 class Analise:
 
@@ -39,14 +41,18 @@ class Analise:
             place(x=235, y=120)
 
         btn1 = Button(self.frame1, text='Análises \nPendentes', font=('arial', 16, 'bold'), bg='#FF5733',
-                      fg='white', bd=4, width=15, justify=CENTER, command=self.pendentes).place(x=100, y=180)
-        btn2 = Button(self.frame1, text='Nova \nAnálise', font=('arial', 16, 'bold'), width=15, bg='#FF5733', bd=4,
+                      fg='white', bd=4, width=12, justify=CENTER, command=self.pendentes).place(x=30, y=180)
+        btn2 = Button(self.frame1, text='Nova \nAnálise', font=('arial', 16, 'bold'), width=12, bg='#FF5733', bd=4,
                       fg='white', command= lambda:[self.tela_principal(), self.tela_servicos(),
                     self.servicos.withdraw(), self.tela_materiais(), self.materiais.withdraw(),
                     self.tela_observacoes(), self.observacoes.withdraw(), self.tela_contratos(),
-                                                   self.contratos.withdraw()]).place(x=350, y=180)
+                                                   self.contratos.withdraw()]).place(x=250, y=180)
 
-
+        btn3 = Button(self.frame1, text='Carregar \nAnálise', font=('arial', 16, 'bold'), bg='#FF5733',
+                      fg='white', bd=4, width=12, justify=CENTER, command=lambda:[self.carregar_analise(),
+                    self.tela_principal(), self.principal.withdraw(), self.tela_servicos(), self.servicos.withdraw(), self.tela_materiais(),
+                    self.materiais.withdraw(), self.tela_observacoes(), self.observacoes.withdraw(), self.tela_contratos(),
+                    self.contratos.withdraw()]).place(x=470, y=180)
 
 
     def pendentes(self):
@@ -207,6 +213,23 @@ class Analise:
                                                                                               pady=10, sticky=W)
                 self.texto_just = Text(self.justifica, width=50, height=10, wrap=WORD)
                 self.texto_just.grid(row=1, column=0, padx=40)
+                def email():
+                    outlook = win32.Dispatch('outlook.application')
+
+                    # criar um email
+                    email = outlook.CreateItem(0)
+
+                    # configurar as informações do seu e-mail
+                    email.To = "loliveira@gasbrasiliano.com.br"
+                    email.Subject = "E-mail automático Análise Tributária"
+                    email.HTMLBody = f"""
+                                            <p>Análise Tributária foi recusada.</p>
+
+                                            """
+
+                    email.Send()
+                    tkinter.messagebox.showinfo('', 'Análise(s) assinada(s) com sucesso!')
+                    self.pendente.lift()
 
                 envio = Button(self.justifica, text='Enviar', font=('arial', 12, 'bold'), bd=2).grid(row=2, column=0, pady=20)
 
@@ -235,6 +258,138 @@ class Analise:
         nf_tree.tag_configure('evenrow', background='lightblue')
         inserir_tree(self.lista)
         nf_tree.bind('<Double-Button>', NotasInfo2)
+
+
+    def carregar_analise(self):
+        self.carregar = Toplevel()
+        titulo = ' '
+        self.carregar.title(160 * titulo + 'Análise Tributária')
+        self.carregar.geometry('1100x680+200+20')
+        self.carregar.resizable(width=False, height=False)
+
+        estilo = ttk.Style()
+        estilo.theme_use('default')
+        estilo.configure('Treeview', background='#D3D3D3', foreground='black', rowheight=25,
+                         fieldbackground='#D3D3D3')
+        estilo.map('Treeview', background=[('selected', '#347083')])
+
+        # Treeview frame
+        tree_frame1 = Frame(self.carregar)
+        tree_frame1.pack(pady=100)
+        # Barra rolagem
+        tree_scroll1 = Scrollbar(tree_frame1)
+        tree_scroll1.pack(side=RIGHT, fill=Y)
+        # Criar Treeview
+        nf_tree1 = ttk.Treeview(tree_frame1, yscrollcommand=tree_scroll1.set, selectmode='extended')
+        nf_tree1.pack(side=LEFT)
+        # Configurar Barra Rolagem
+        tree_scroll1.config(command=nf_tree1.yview)
+        # Definir colunas
+        colunas2 = ['Análise', 'Data']
+        nf_tree1['columns'] = colunas2
+        # formatar colunas
+        nf_tree1.column('Análise', width=350)
+        nf_tree1.column('Data', width=100)
+
+        # formatar títulos
+        nf_tree1.heading('Análise', text='Análise', anchor=W)
+        nf_tree1.heading('Data', text='Data', anchor=W)
+
+        nf_tree1['show'] = 'headings'
+        lista = []
+        temp_list = []
+        with open('G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Base.txt', "rb") as carga:
+            while True:
+                try:
+                    temp_list.append(pickle.load(carga))
+                except EOFError:
+                    break
+        for n, item in enumerate(temp_list):
+            lista.append([])
+            lista[n].append(item[2])
+            lista[n].append(item[0])
+
+
+        # inserir dados do banco no treeview
+        def inserir_tree(lista):
+            nf_tree1.delete(*nf_tree1.get_children())
+            contagem = 0
+            for row in lista:  # loop para inserir cores diferentes nas linhas
+                if contagem % 2 == 0:
+                    nf_tree1.insert(parent='', index='end', text='', iid=contagem,
+                                   values=(row[0], row[1]), tags=('evenrow',))
+                else:
+                    nf_tree1.insert(parent='', index='end', text='', iid=contagem,
+                                   values=(row[0], row[1]), tags=('oddrow',))
+                contagem += 1
+
+        def NotasInfo2(ev):
+            # fn_id.delete(0, END)
+            verinfo3 = nf_tree1.focus()
+            dados3 = nf_tree1.item(verinfo3)
+
+            self.gere.delete(0, END)
+            self.proc.delete(0, END)
+            self.req.delete(0, END)
+            self.orcam.delete(0, END)
+            self.objcust.delete(0, END)
+            self.tipoa.deselect()
+            self.tipob.deselect()
+            self.tipoc.deselect()
+            self.objeto.delete(1.0, END)
+            self.valor.delete(0, END)
+            self.complem.delete(1.0, END)
+            self.linha_mat.delete(0, END)
+            self.cod_serv.delete(0, END)
+            self.iva.delete(0, END)
+            self.linha_serv.delete(0, END)
+            self.obs.delete(1.0, END)
+            self.obs1.delete(1.0, END)
+            self.obs2.delete(1.0, END)
+            self.gere.insert(0, temp_list[int(verinfo3)][1])
+            self.proc.insert(0, temp_list[int(verinfo3)][2])
+            self.req.insert(0, temp_list[int(verinfo3)][3])
+            self.orcam.insert(0, temp_list[int(verinfo3)][4])
+            self.objcust.insert(0, temp_list[int(verinfo3)][5])
+            self.tipo1.set(int(temp_list[int(verinfo3)][6]))
+            self.tipo2.set(int(temp_list[int(verinfo3)][7]))
+            self.tipo3.set(int(temp_list[int(verinfo3)][8]))
+            self.objeto.insert(1.0, temp_list[int(verinfo3)][9])
+            self.valor.insert(0, temp_list[int(verinfo3)][10])
+            self.complem.insert(1.0, temp_list[int(verinfo3)][11])
+            for r, val in enumerate(temp_list[int(verinfo3)][12][1:]):
+                print(val)
+                for b, value in enumerate(val):
+                    print(value)
+                    self.lista_mat[b][r].delete(0, END)
+                    self.lista_mat[b][r].insert(0, value)
+
+            self.linha_mat.insert(0, temp_list[int(verinfo3)][13])
+            self.serv.insert(1.0, temp_list[int(verinfo3)][14])
+            self.iva.insert(0, temp_list[int(verinfo3)][15])
+            for r, val in enumerate(temp_list[int(verinfo3)][16][1:]):
+                print(val)
+                for b, value in enumerate(val):
+                    print(value)
+                    self.lista[b][r].delete(0, END)
+                    self.lista[b][r].insert(0, value)
+            self.linha_serv.insert(0, temp_list[int(verinfo3)][17])
+            self.obs.insert(1.0, temp_list[int(verinfo3)][18])
+            self.obs1.insert(1.0, temp_list[int(verinfo3)][19])
+            self.obs2.insert(1.0, temp_list[int(verinfo3)][20])
+
+
+
+            self.carregar.destroy()
+            self.principal.deiconify()
+
+        # adicionar a tela
+        nf_tree1.tag_configure('oddrow', background='white')
+        nf_tree1.tag_configure('evenrow', background='lightblue')
+        inserir_tree(lista)
+        nf_tree1.bind('<Double-Button>', NotasInfo2)
+
+
 
 
     def tela_principal(self):
@@ -272,140 +427,32 @@ class Analise:
 
         self.gere = Entry(info_frame, width=20, bd=4, font=self.ent_fonte)
         self.gere.place(x=230, y=48)
-        self.gere.insert(0, 'GECOT')
         self.proc = Entry(info_frame, width=20, bd=4, font=self.ent_fonte)
         self.proc.place(x=700, y=50)
-        self.proc.insert(0, 'DV-004/2021')
         self.req = Entry(info_frame, width=20, bd=4, font=self.ent_fonte)
         self.req.place(x=230, y=88)
-        self.req.insert(0, '10189080')
         self.orcam = ttk.Combobox(info_frame, font=self.fonte, width=12)
         self.orcam['values'] = ('Não', 'Sim')
         self.orcam.current(1)
         self.orcam.place(x=700, y=88)
         self.objcust = Entry(info_frame, width=20, bd=4, font=self.ent_fonte)
         self.objcust.place(x=230, y=128)
-        self.objcust.insert(0, 'PEP RSG.01.001.001.01')
         self.tipo1 = IntVar()
         self.tipo2 = IntVar()
         self.tipo3 = IntVar()
-        self.tipoa = Checkbutton(info_frame, var=self.tipo1, onvalue=1, offvalue=0, text='Material', font=('arial', 12))
+        self.tipoa = Checkbutton(info_frame, var=self.tipo1, onvalue=1, offvalue=0, text='Serviço', font=('arial', 12))
         self.tipoa.place(x=690, y=125)
-        self.tipob = Checkbutton(info_frame, var=self.tipo2, onvalue=1, offvalue=0, text='Serviço', font=('arial', 12))
+        self.tipob = Checkbutton(info_frame, var=self.tipo2, onvalue=1, offvalue=0, text='Material', font=('arial', 12))
         self.tipob.place(x=690, y=155)
         self.tipoc = Checkbutton(info_frame, var=self.tipo3, onvalue=1, offvalue=0, text='Material com Forn. Serviço',
                                  font=('arial', 12))
         self.tipoc.place(x=690, y=185)
-        # self.tipo = ttk.Combobox(info_frame, font=self.fonte, width=25)
-        # self.tipo['values'] = ('Serviço', 'Material', 'Serviço com Fornec de Mat')
-        # self.tipo.current(1)
-        # self.tipo.place(x=700, y=128)
         self.objeto = Text(info_frame2, width=50, height=5, bd=4, font='arial')
         self.objeto.place(x=20, y=55)
-        self.objeto.insert('end', 'Serviços de reparo da infraestrutura de cabeamento de dados e telefonia do prédio '
-                              'administrativo da GasBrasiliano.')
         self.valor = Entry(info_frame2, width=20, bd=4, font=self.ent_fonte)
         self.valor.place(x=550, y=55)
-        self.valor.insert('end', 'R$ 44.072,64')
         self.complem = Text(info_frame2, width=50, height=3, bd=4, font='arial')
         self.complem.place(x=20, y=200)
-
-        # self.pdf = FPDF(orientation='P', unit='mm', format='A4')
-        # self.pdf.add_page()
-        #
-        # self.pdf_w = 210
-        # self.pdf_h = 297
-        #
-        # self.pdf.rect(5.0, 5.0, 200.0, 20.0)
-        #
-        # self.pdf.image('logo.jpg', x=7.0, y=7.0, h=15.0, w=50.0)
-        # self.pdf.line(70.0, 5.0, 70.0, 25.0)
-        #
-        # self.pdf.set_font('Arial', 'B', 10)
-        # self.pdf.set_xy(75.0, 9.0)
-        # self.pdf.multi_cell(w=125, h=5,
-        #                     txt='Análise Contábil e Tributária para Processos de Licitação e ou Contratação Direta')
-        #
-        # self.pdf.rect(5.0, 30.0, 200.0, 25.0)
-        # self.pdf.line(5.0, 40.0, 205.0, 40.0)
-        # self.pdf.line(88.0, 30.0, 88.0, 55.0)
-        #
-        # def adic_infos():
-        #     self.pdf.set_xy(10.0, 25.0)
-        #     self.pdf.cell(w=40, h=20, txt='Gerência Contratante:')
-        #     self.pdf.set_xy(50.0, 25.0)
-        #     self.pdf.cell(w=40, h=20, txt=self.gere.get())
-        #     self.pdf.set_xy(90.0, 22.5)
-        #     self.pdf.cell(w=40, h=20, txt='N° do Processo GECBS:')
-        #     self.pdf.set_xy(90.0, 26.5)
-        #     self.pdf.cell(w=40, h=20, txt=self.proc.get())
-        #     self.pdf.set_xy(142.0, 22.5)
-        #     self.pdf.cell(w=40, h=20, txt='Requisição de Compras: ')
-        #     self.pdf.set_xy(142.0, 26.5)
-        #     self.pdf.cell(w=40, h=20, txt=self.req.get())
-        #     self.pdf.set_xy(10.0, 35.0)
-        #     self.pdf.cell(w=40, h=20, txt='Objeto de Custos:')
-        #     self.pdf.set_xy(43.0, 42.5)
-        #     self.pdf.multi_cell(w=45, h=5, align='L', txt=self.objcust.get())
-        #     self.pdf.set_xy(90.0, 35.0)
-        #     self.pdf.cell(w=40, h=20, txt='Consta no Orçamento? ')
-        #     self.pdf.set_xy(148.0, 35.0)
-        #     self.pdf.cell(w=40, h=20, txt='Sim')
-        #     self.pdf.set_xy(175.0, 35.0)
-        #     self.pdf.cell(w=40, h=20, txt='Não')
-        #     if self.orcam.get() == 'Sim':
-        #         self.pdf.set_xy(138.0, 35.0)
-        #         self.pdf.cell(w=40, h=20, txt='X')
-        #     else:
-        #         self.pdf.set_xy(169.0, 35.0)
-        #         self.pdf.cell(w=40, h=20, txt='X')
-        #     self.pdf.rect(5.0, 60.0, 200.0, 225.0)
-        #     self.pdf.line(5.0, 66.0, 205.0, 66.0)
-        #     self.pdf.set_xy(100.0, 53.0)
-        #     self.pdf.cell(w=40, h=20, txt='ANÁLISE')
-        #     self.pdf.line(5.0, 75.0, 205.0, 75.0)
-        #     self.pdf.set_xy(30.0, 60.5)
-        #     self.pdf.cell(w=40, h=20, txt='Serviço')
-        #     self.pdf.set_xy(90.0, 60.5)
-        #     self.pdf.cell(w=40, h=20, txt='Material')
-        #     self.pdf.set_xy(135.0, 60.5)
-        #     self.pdf.cell(w=40, h=20, txt='Serviço com Fornecimento de Material')
-        #     if self.tipo.current() == 0:
-        #         self.pdf.set_xy(25.0, 60.5)
-        #         self.pdf.cell(w=40, h=20, txt='X')
-        #     elif self.tipo.current() == 1:
-        #         self.pdf.set_xy(85.0, 60.5)
-        #         self.pdf.cell(w=40, h=20, txt='X')
-        #     else:
-        #         self.pdf.set_xy(130.0, 65.0)
-        #         self.pdf.cell(w=40, h=20, txt='X')
-        #     self.pdf.set_xy(10.0, 77.0)
-        #     self.pdf.cell(w=40, h=5, txt='Objeto: ')
-        #     self.pdf.set_xy(30.0, 77.0)
-        #     self.pdf.set_font('')
-        #     self.pdf.multi_cell(w=160, h=5, txt=self.objeto.get(1.0, 'end'))
-        #     self.pdf.set_font('arial', 'B', 10)
-        #     self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
-        #     self.pdf.cell(w=40, h=5, txt='Valor estimado: ')
-        #     self.pdf.set_xy(40.0, self.pdf.get_y())
-        #     self.pdf.set_font('')
-        #     self.pdf.cell(w=40, h=5, txt=self.valor.get())
-        #     self.pdf.set_font('arial', 'B', 10)
-        #     self.pdf.set_xy(15.0, self.pdf.get_y() + 10)
-        #
-        #     self.pdf.set_auto_page_break(True, 20.0)
-
-        # def tipo_serv(ev):
-        #     if self.tipo.get() == 'Material':
-        #         self.chama_serv.config(state='disabled')
-        #     if self.tipo.get() == 'Serviço':
-        #         self.chama_serv.config(state='normal')
-        #         self.chama_mat.config(state='disabled')
-        #         self.tela_servicos()
-        #         self.servicos.withdraw()
-        #
-        # self.tipo.bind('<FocusOut>', tipo_serv)
-
 
 
         self.chama_mat = Button(info_frame3, font=('arial', 14, 'bold'), text='Materiais', bd=3, width=20,
@@ -447,18 +494,9 @@ class Analise:
         self.cod_serv.place(x=150, y=30)
         self.serv = Text(self.serv_frame, width=70, height=7, bd=4, font='arial', wrap=WORD)
         self.serv.place(x=240, y=30)
-        self.serv.insert('end', '10.08 Agenciamento de publicidade e propaganda, inclusive o agenciamento de veiculação'
-                                ' por quaisquer meios. \nSobre o serviço haverá retenção de IRRF: \nDeverá ser retido o '
-                                'imposto de renda na fonte sobre o valor pago ou creditado por pessoa jurídica à pessoa'
-                                ' jurídica, civil ou mercantil, pelo serviço prestado de intermediação e congêneres, '
-                                'de acordo com o artigo 718 do RIR/2018. A retenção deve ser feita pela pessoa jurídica'
-                                ' que receber valores de comissões e corretagens mencionadas na IN SRF nº 153/87; \nPCC: '
-                                'o serviço não consta (IN SRF nº 459/2004, artigo 1º, § 2º, inciso II); \nINSS: serviço '
-                                'não se enquadra no art 117 e 118 da IN RFB nº 971/2009; \nISS: o serviço não consta no '
-                                'art 3º da lei complementar 116/2003 alterada 157/2016.')
+
         self.iva = Entry(self.serv_frame, width=10, bd=4, font=self.fonte)
         self.iva.place(x=150, y=190)
-        self.iva.insert(0, 'ZJ')
         Label(self.serv_frame, text='Quebra', font=('arial', 10, 'bold'), bd=0).place(x=990, y=505)
         self.linha_serv = Entry(self.serv_frame, font=('arial', 10, 'bold'), bd=2, width=3)
         self.linha_serv.place(x=1000, y=530)
@@ -482,16 +520,28 @@ class Analise:
 
         self.cod_serv.bind('<FocusOut>', busca_servico)
 
+        sf = ScrolledFrame(self.servicos, width=570, height=250)
+        sf.place(x=285, y=270)
+
+        # Bind the arrow keys and scroll wheel
+        sf.bind_arrow_keys(self.servicos)
+        sf.bind_scroll_wheel(self.servicos)
+
+        # Create a frame within the ScrolledFrame
+        inner_frame2 = sf.display_widget(Frame)
+
+
         Label(self.serv_frame, text='Código', font=self.fonte).place(x=305, y=230)
         Label(self.serv_frame, text='Descrição', font=self.fonte).place(x=505, y=230)
         Label(self.serv_frame, text='C.C.', font=self.fonte).place(x=750, y=230)
-        lista = [[], [], []]
+        self.lista = [[], [], []]
         self.entradas = []
         self.data = [['DESCRIÇÃO', 'CÓDIGO', 'C.C']]
+        # self.data.append(['MONITORAMENTO ALARME - OP', '3001580', '5605'])
         # múltiplos serviços
         px = 265
         py = 255
-        for i in range(10):
+        for i in range(30):
             for c in range(3):
                 if c == 1:
                     largura = 30
@@ -499,10 +549,10 @@ class Analise:
                 else:
                     largura = 15
                     espaco = 145
-                serv = Entry(self.serv_frame, width=largura, bd=3, font='arial')
-                serv.place(x=px, y=py)
+                serv = Entry(inner_frame2, width=largura, bd=3, font='arial')
+                serv.grid(row=i, column=c)
                 self.entradas.append(serv)
-                lista[c].append(serv)
+                self.lista[c].append(serv)
                 px += espaco
             py += 26
             px = 265
@@ -528,11 +578,11 @@ class Analise:
                         del values[1:]
                     for b, value in enumerate(values):
                         for index, row in serv_cad.iterrows():
-                            lista[b][r].delete(0, END)
-                            lista[b][r].insert(0, value)
+                            self.lista[b][r].delete(0, END)
+                            self.lista[b][r].insert(0, value)
                             if value == row['Nº de serviço']:
-                                lista[b + 1][r].insert(0, serv_cad.loc[index, 'Denominação'])
-                                lista[b + 2][r].insert(0, int(serv_cad.loc[index, 'Classe avaliaç.']))
+                                self.lista[b + 1][r].insert(0, serv_cad.loc[index, 'Denominação'])
+                                self.lista[b + 2][r].insert(0, int(serv_cad.loc[index, 'Classe avaliaç.']))
             else:
                 pass
 
@@ -566,7 +616,7 @@ class Analise:
 
 
         def limpar():
-            self.data.clear()
+            del self.data[1:]
             for lin in self.entradas:
                 lin.delete(0, END)
 
@@ -634,16 +684,31 @@ class Analise:
         self.linha_mat.place(x=1000, y=530)
         self.linha_mat.insert(0, 0)
 
-        lista_mat = [[], [], [], [], [], [], [], []]
+        sf = ScrolledFrame(self.materiais, width=780, height=300)
+        sf.place(x=168, y=175)
+
+        # Bind the arrow keys and scroll wheel
+        sf.bind_arrow_keys(self.materiais)
+        sf.bind_scroll_wheel(self.materiais)
+
+        # Create a frame within the ScrolledFrame
+        inner_frame1 = sf.display_widget(Frame)
+
+
+
+        self.lista_mat = [[], [], [], [], [], [], [], []]
         self.entradas_mat = []
         self.data_mat = [['CÓDIGO', 'DESCRIÇÃO', 'IVA', 'NCM', 'ICMS', 'IPI', 'PIS', 'COFINS']]
         self.mat_check = []
+        # listin = ['604400','CENTRAL DE ALARME COMPLETA COM 18','ZB','8531.10.10','18,0%','15,0%','1,65%','7,6%']
+        # for l in range(22):
+        #     self.data_mat.append(listin)
 
 
         # múltiplos materiais
-        px = 150
+        px = 50
         py = 160
-        for i in range(10):
+        for i in range(30):
             for c in range(8):
                 if c == 1:
                     largura = 30
@@ -657,13 +722,13 @@ class Analise:
                 else:
                     largura = 5
                     espaco = 55
-                mater = Entry(self.mat_frame, width=largura, bd=4, font='arial')
-                mater.place(x=px, y=py)
+                mater = Entry(inner_frame1, width=largura, bd=4, font='arial')
+                mater.grid(row=i, column=c)
                 self.entradas_mat.append(mater)
-                lista_mat[c].append(mater)
+                self.lista_mat[c].append(mater)
                 px += espaco
             py += 30
-            px = 150
+            px = 50
 
         self.check2 = IntVar()
         self.check3 = IntVar()
@@ -686,6 +751,8 @@ class Analise:
                     if item.get() != '':
                         self.entradas_mat[e + 4].delete(0, END)
                         self.entradas_mat[e + 4].insert(0, '18%')
+                        self.entradas_mat[e + 5].delete(0, END)
+                        self.entradas_mat[e + 5].insert(0, '15%')
                         self.entradas_mat[e+6].delete(0, END)
                         self.entradas_mat[e+6].insert(0, '1,65%')
                         self.entradas_mat[e + 7].delete(0, END)
@@ -730,13 +797,13 @@ class Analise:
                     del values[1:]
                 for b, value in enumerate(values):
                     for index, row in cad_mat.iterrows():
-                        lista_mat[b][r].delete(0, END)
-                        lista_mat[b][r].insert(0, value)
+                        self.lista_mat[b][r].delete(0, END)
+                        self.lista_mat[b][r].insert(0, value)
                         if value == row['Material']:
                             campo = cad_mat.loc[index, 'Texto breve material']
                             campo = campo[:32]
-                            lista_mat[b+1][r].insert(0, campo)
-
+                            self.lista_mat[b+1][r].insert(0, campo)
+                            self.lista_mat[b + 3][r].insert(0, cad_mat.loc[index, 'Ncm'])
 
 
         def adicionar():
@@ -758,7 +825,7 @@ class Analise:
 
 
         def limpar():
-            self.data_mat.clear()
+            del self.data_mat[1:]
             for lin in self.entradas_mat:
                 lin.delete(0, END)
 
@@ -816,16 +883,17 @@ class Analise:
         inner_frame = sf.display_widget(Frame)
 
         # Add a bunch of widgets to fill some space
-        self.nomes = ['N/A', '2.3.7.', '2.3.7.1', '2.3.7.2', '2.3.7.2.', '2.3.7.3', '2.3.7.4', '6.8.2', '15.1',
+        self.nomes = ['N/A', 'Minuta', 'Redação', '2.3.7.', '2.3.7.1', '2.3.7.2', '2.3.7.3', '2.3.7.4', '6.8.2', '15.1',
                       '3.10.1', '3.9-10-11', 'Anexo 2']
         self.var_check = []
         linha = 3
-        for check in range(12):
+        for check in range(13):
             self.var_check.append(IntVar())
             check1 = Checkbutton(inner_frame, text=self.nomes[check], variable=self.var_check[check], onvalue=1,
                                  offvalue=0, bd=0, font=('arial', 14))
             check1.grid(row=linha, column=1, padx=70)
             linha += 2
+
 
         self.info_lbl = Label(inner_frame, bd=0, bg='floral white', font=('arial', 14),
                               text='Informações  contratuais: ').grid(row=2, column=2, pady=30)
@@ -852,13 +920,11 @@ class Analise:
             email = outlook.CreateItem(0)
 
             # configurar as informações do seu e-mail
-            email.To = "loliveira@gasbrasiliano.com.br"
-            email.Subject = "E-mail automático Análise Tributária TESTE"
+            email.To = "pfranca@gasbrasiliano.com.br"
+            email.Subject = "E-mail automático Análise Tributária"
             email.HTMLBody = f"""
-            <p>A Análise Tributária {self.proc.get()} está disponível para assinatura.</p>
+            <p>Análise Tributária {self.proc.get()} está disponível para assinatura.</p>
 
-            <p>Abs,</p>
-            <p>Código Python</p>
             """
 
             # anexo = "C://Users/joaop/Downloads/arquivo.xlsx"
@@ -873,27 +939,15 @@ class Analise:
             grid(row=28, column=1, pady=10, padx=20)
 
         self.gerar = Button(inner_frame, font=self.fonte, text='Gerar PDF', bd=4,
-                              command=self.salvar).grid(row=27, column=2, pady=30)
+                              command=self.salvar).grid(row=28, column=2, pady=30)
 
         self.enviar = Button(inner_frame, font=self.fonte, text='Enviar Email', bd=4,
-                               command=enviar_email).grid(row=28, column=2, pady=10)
+                               command=enviar_email).grid(row=29, column=2, pady=10)
 
-        Label(inner_frame, text='Quebra', font=('arial', 10, 'bold'), bd=0).grid(row=28, column=3)
+        Label(inner_frame, text='Quebra', font=('arial', 10, 'bold'), bd=0).grid(row=29, column=3)
         self.linha_cont = Entry(inner_frame, font=('arial', 10, 'bold'), bd=2, width=3)
-        self.linha_cont.grid(row=29, column=3, pady=10)
+        self.linha_cont.grid(row=30, column=3, pady=10)
         self.linha_cont.insert(0, 0)
-
-    # def assinar(self):
-    #     self.assinat = Toplevel()
-    #     titulo = ' '
-    #     self.assinat.title(160 * titulo + 'Assinar')
-    #     self.assinat.geometry('1200x680+100+20')
-    #
-    #     self.ass_frame = Frame(self.assinat, width=1200, height=680, relief=RIDGE, bd=7, bg='floral white')
-    #     self.ass_frame.place(x=0, y=0)
-    #
-    #     canvas = Canvas(self.ass_frame, width=500, height=250)
-    #     canvas.place(x=50, y=50)
 
 
     def tela_observacoes(self):
@@ -948,16 +1002,30 @@ class Analise:
 
 
     def salvar(self):
+        # ============================== GUARDAR DADOS ========================================#
+        dados_salvos = []
+        dados_salvos.extend([date.today().strftime('%d/%m/%Y %H:%M'), self.gere.get(), self.proc.get(), self.req.get(),
+                             self.orcam.get(), self.objcust.get(),
+                             self.tipo1.get(), self.tipo2.get(), self.tipo3.get(), self.objeto.get(1.0, END), self.valor.get(), self.complem.get(1.0, END),
+                             self.data_mat,
+                            self.linha_mat.get(), self.serv.get(1.0, END), self.iva.get(), self.data, self.linha_serv.get(),
+                             self.obs.get(1.0, END), self.obs1.get(1.0, END), self.obs2.get(1.0, END)])
+
+        with open("G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Base.txt", "ab") as fp:  # Pickling
+            pickle.dump(dados_salvos, fp)
+
+
         # ============================== CRIAR PDF ============================================#
         self.pdf = FPDF(orientation='P', unit='mm', format='A4')
         self.pdf.add_page()
 
         self.pdf_w = 210
         self.pdf_h = 297
-
+        self.pdf.rect(5.0, 5.0, 200.0, 280.0)
         self.pdf.rect(5.0, 5.0, 200.0, 20.0)
 
-        self.pdf.image('logo.jpg', x=7.0, y=7.0, h=15.0, w=50.0)
+        self.pdf.image('G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\logo.jpg', x=7.0, y=7.0,
+                       h=15.0, w=50.0)
         self.pdf.line(70.0, 5.0, 70.0, 25.0)
 
         self.pdf.set_font('Arial', 'B', 10)
@@ -968,6 +1036,7 @@ class Analise:
         self.pdf.rect(5.0, 30.0, 200.0, 25.0)
         self.pdf.line(5.0, 40.0, 205.0, 40.0)
         self.pdf.line(88.0, 30.0, 88.0, 55.0)
+        self.pdf.line(137.0, 30.0, 137.0, 40.0)
 
         # ===================================== INFORMAÇÕES INICIAIS ==================================#
         self.pdf.set_xy(10.0, 25.0)
@@ -998,9 +1067,9 @@ class Analise:
         else:
             self.pdf.set_xy(169.0, 35.0)
             self.pdf.cell(w=40, h=20, txt='X')
-        self.pdf.rect(5.0, 60.0, 200.0, 225.0)
+        # self.pdf.rect(5.0, 60.0, 200.0, 225.0)
         self.pdf.line(5.0, 66.0, 205.0, 66.0)
-        self.pdf.set_xy(100.0, 53.0)
+        self.pdf.set_xy(100.0, 51.0)
         self.pdf.cell(w=40, h=20, txt='ANÁLISE')
         self.pdf.line(5.0, 75.0, 205.0, 75.0)
         self.pdf.set_xy(30.0, 60.5)
@@ -1030,104 +1099,27 @@ class Analise:
         self.pdf.set_font('')
         self.pdf.cell(w=40, h=5, txt=self.valor.get())
         self.pdf.set_font('arial', 'B', 10)
-        self.pdf.set_xy(15.0, self.pdf.get_y() + 10)
+        self.pdf.set_xy(15.0, self.pdf.get_y() + 5)
+        self.pdf.cell(w=40, h=5, txt=self.complem.get(1.0, END))
+        self.pdf.set_xy(15.0, self.pdf.get_y() + 5)
 
         self.pdf.set_auto_page_break(True, 20.0)
         # self.pdf.set_auto_page_break(True, 20.0)
 
-        # ======================================== SERVIÇOS =============================================#
-        if self.iva.get() != '':
-            self.pdf.set_xy(10.0, self.pdf.get_y())
-            self.pdf.multi_cell(w=180, h=5, txt='O código de imposto (IVA) utilizado no pedido (SAP) '
-                                            'deverá ser o ' + self.iva.get() + '.')
-
-
-
-            print(self.data)
-            self.dados_faltantes = []
-            # def cria_tabela(data):
-            self.pdf.set_xy(10, self.pdf.get_y() + 5)
-            cont_lista = 0
-            cont = 3
-            px = 10
-            py = self.pdf.get_y()
-            # while self.pdf.get_y() < 274:
-            for row in self.data:
-                for datum in row:
-                    if cont % 3 == 0:
-                        self.pdf.set_font('') if cont_lista != 0 else self.pdf.set_font('Arial', 'B', 10)
-                        self.pdf.set_xy(px + 20, py)
-                        self.pdf.multi_cell(w=150, h=5, txt=datum, border=1)
-                    elif cont % 4 == 0:
-                        atual = self.pdf.get_y() - py
-                        self.pdf.set_xy(px, py)
-                        self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
-                    else:
-                        atual = self.pdf.get_y() - py
-                        self.pdf.set_xy(px + 170, py)
-                        self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
-                    cont += 1
-                px = 10
-                py = self.pdf.get_y()
-                cont = 3
-                cont_lista += 1
-                if py > 270:
-                    self.dados_faltantes = self.data[cont_lista:]
-                    self.pdf.add_page()
-                    self.pdf.rect(5.0, 5.0, 200.0, 267.0)
-                    break
-
-            if self.dados_faltantes:
-                self.dados_faltantes.insert(0, ['DESCRIÇÃO', 'CÓDIGO', 'C.C'])
-                cont = 3
-                px = 10
-                py = self.pdf.get_y()
-                # while self.pdf.get_y() < 274:
-                for row in self.dados_faltantes:
-                    for datum in row:
-                        if cont % 3 == 0:
-                            self.pdf.set_xy(px + 20, py)
-                            self.pdf.multi_cell(w=150, h=5, txt=datum, border=1)
-                        elif cont % 4 == 0:
-                            atual = self.pdf.get_y() - py
-                            self.pdf.set_xy(px, py)
-                            self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
-                        else:
-                            atual = self.pdf.get_y() - py
-                            self.pdf.set_xy(px + 170, py)
-                            self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
-                        cont += 1
-                    px = 10
-                    py = self.pdf.get_y()
-                    cont = 3
-
-            else:
-                pass
-
-            self.pdf.set_y(self.pdf.get_y() + (float(self.linha_serv.get())*10))
-            if int(self.linha_serv.get()) > 0:
-                self.pdf.rect(5.0, 5.0, 200.0, 285.0)
-
-
-            self.pdf.set_xy(15.0, self.pdf.get_y() + 10)
-            q1 = self.pdf.get_y()
-            self.pdf.multi_cell(w=180, h=5, txt='Informações Tributárias: ')
-
-            # self.pdf.set_font('Arial', 'B', 10)
-            self.pdf.set_xy(15.0, self.pdf.get_y() + 5)
-            self.pdf.set_font('Arial', 'B', 10)
-            self.pdf.multi_cell(w=180, h=5, txt=self.serv.get(1.0, 'end'))
-            self.pdf.rect(10.0, q1 - 3, 190.0, self.pdf.get_y() - q1)
-
-
         # ======================================= MATERIAIS =================================#
 
         if len(self.data_mat) > 1:
-            self.pdf.set_auto_page_break(True, 20.0)
+            self.pdf.set_xy(10, self.pdf.get_y() + 5)
+            if self.pdf.get_y() > 276:
+                self.pdf.rect(5.0, 5.0, 200.0, 280.0)
 
-            # self.pdf.set_xy(15.0, self.pdf.get_y() + 10)
+
             q1 = self.pdf.get_y()
+            self.pdf.set_font('')
             self.pdf.multi_cell(w=180, h=5, txt='Informações Tributárias: ')
+            self.pdf.set_xy(10, self.pdf.get_y() + 5)
+            self.pdf.multi_cell(w=180, h=5, txt=' - Materiais serão acobertados por Nota Fiscal eletrônica modelo 55. ')
+            self.pdf.set_font('Arial', 'B', 10)
 
             self.dados_faltantes = []
             # def cria_tabela(data):
@@ -1164,7 +1156,96 @@ class Analise:
                 if py > 270:
                     self.dados_faltantes = self.data_mat[cont_lista:]
                     self.pdf.add_page()
-                    self.pdf.rect(5.0, 5.0, 200.0, 285.0)
+                    self.pdf.rect(5.0, 5.0, 200.0, 280.0)
+                    break
+
+            if self.dados_faltantes:
+                self.dados_faltantes.insert(0, ['DESCRIÇÃO', 'CÓDIGO', 'C.C'])
+                cont = 3
+                px = 10
+                py = self.pdf.get_y()
+                for row in self.dados_faltantes:
+                    for datum in row:
+                        if cont % 3 == 0:
+                            self.pdf.set_xy(px + 20, py)
+                            self.pdf.multi_cell(w=150, h=5, txt=datum, border=1)
+                        elif cont % 4 == 0:
+                            atual = self.pdf.get_y() - py
+                            self.pdf.set_xy(px, py)
+                            self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
+                        else:
+                            atual = self.pdf.get_y() - py
+                            self.pdf.set_xy(px + 170, py)
+                            self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
+                        cont += 1
+                    px = 10
+                    py = self.pdf.get_y()
+                    cont = 3
+
+            else:
+                pass
+
+            self.pdf.rect(7.5, q1 - 3, 195, self.pdf.get_y() - q1 + 7.5)
+            self.pdf.set_xy(10.0, self.pdf.get_y() + 10)
+
+            self.pdf.multi_cell(w=180, h=5, txt=self.obs.get(1.0, 'end'))
+            self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
+            self.pdf.rect(5.0, 5.0, 200.0, 280.0)
+        # ======================================== SERVIÇOS =============================================#
+
+
+
+
+        if self.iva.get() != '':
+
+            self.pdf.set_y(self.pdf.get_y() + (float(self.linha_serv.get()) * 10))
+            if int(self.linha_serv.get()) > 0:
+                self.pdf.add_page()
+                self.pdf.rect(5.0, 5.0, 200.0, 280.0)
+
+            q2 = self.pdf.get_y()
+            print(q2)
+            self.pdf.multi_cell(w=180, h=5,
+                                txt=' - Serviços serão acobertados por Nota Fiscal de serviço eletrônica. ')
+
+            self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
+            self.pdf.multi_cell(w=180, h=5, txt='O código de imposto (IVA) utilizado no pedido (SAP) '
+                                            'deverá ser o ' + self.iva.get() + '.')
+
+
+
+
+            self.dados_faltantes = []
+            # def cria_tabela(data):
+            self.pdf.set_xy(10, self.pdf.get_y() + 5)
+            cont_lista = 0
+            cont = 3
+            px = 10
+            py = self.pdf.get_y()
+            # while self.pdf.get_y() < 274:
+            for row in self.data:
+                for datum in row:
+                    if cont % 3 == 0:
+                        self.pdf.set_font('') if cont_lista != 0 else self.pdf.set_font('Arial', 'B', 10)
+                        self.pdf.set_xy(px + 20, py)
+                        self.pdf.multi_cell(w=150, h=5, txt=datum, border=1)
+                    elif cont % 4 == 0:
+                        atual = self.pdf.get_y() - py
+                        self.pdf.set_xy(px, py)
+                        self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
+                    else:
+                        atual = self.pdf.get_y() - py
+                        self.pdf.set_xy(px + 170, py)
+                        self.pdf.multi_cell(w=20, h=atual, txt=datum, border=1)
+                    cont += 1
+                px = 10
+                py = self.pdf.get_y()
+                cont = 3
+                cont_lista += 1
+                if py > 270:
+                    self.dados_faltantes = self.data[cont_lista:]
+                    self.pdf.add_page()
+                    self.pdf.rect(5.0, 5.0, 200.0, 280.0)
                     break
 
             if self.dados_faltantes:
@@ -1194,29 +1275,43 @@ class Analise:
             else:
                 pass
 
-            self.pdf.rect(7.5, q1 - 3, 192.5, self.pdf.get_y() - q1)
+
+
+
+            self.pdf.set_xy(15.0, self.pdf.get_y() + 10)
+
+            self.pdf.multi_cell(w=180, h=5, txt='Informações Tributárias: ')
+
+            # self.pdf.set_font('Arial', 'B', 10)
+            self.pdf.set_xy(15.0, self.pdf.get_y() + 5)
+            self.pdf.set_font('Arial', 'B', 10)
+            self.pdf.multi_cell(w=180, h=5, txt=self.serv.get(1.0, 'end'))
+            self.pdf.rect(7.5, q2 - 3, 195.0, self.pdf.get_y() - q2 + 7.5)
+            self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
+            self.pdf.rect(5.0, 5.0, 200.0, 280.0)
+
 
         # ============================== OBSERVAÇÕES ===========================================#
-        print(self.pdf.get_y())
-        if self.pdf.get_y() > 270:
-            self.pdf.add_page()
-            self.pdf.rect(5.0, 5.0, 200.0, 280.0)
-        else:
-            pass
+        # print(self.pdf.get_y())
+        # if self.pdf.get_y() > 270:
+        #     self.pdf.add_page()
+        #     self.pdf.rect(5.0, 5.0, 200.0, 280.0)
+        # else:
+        #     pass
+
         self.pdf.set_font('')
-        self.pdf.multi_cell(w=180, h=5, txt=self.obs.get(1.0, 'end'))
-        self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
+
         self.pdf.multi_cell(w=180, h=5, txt=self.obs1.get(1.0, 'end'))
         self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
         self.pdf.multi_cell(w=180, h=5, txt=self.obs2.get(1.0, 'end'))
 
         #=============================  INFORMAÇÕES CONTRATUAIS ===========================================#
-        print(self.pdf.get_y())
-        if self.pdf.get_y() > 270:
-            self.pdf.add_page()
-            self.pdf.rect(5.0, 5.0, 200.0, 285.0)
-        else:
-            pass
+        # print(self.pdf.get_y())
+        # if self.pdf.get_y() > 270:
+        #     self.pdf.add_page()
+        #     self.pdf.rect(5.0, 5.0, 200.0, 285.0)
+        # else:
+        #     pass
         self.pdf.set_y(self.pdf.get_y() + (float(self.linha_cont.get())*10))
 
 
@@ -1234,9 +1329,9 @@ class Analise:
         if int(self.linha_cont.get()) > 0:
             self.pdf.rect(5.0, 5.0, 200.0, 280.0)
 
-        if self.pdf.get_y() > 265:
-            self.pdf.add_page()
-            self.pdf.rect(5.0, 5.0, 200.0, 280.0)
+        # if self.pdf.get_y() > 265:
+        #     self.pdf.add_page()
+        #     self.pdf.rect(5.0, 5.0, 200.0, 280.0)
 
 
 
@@ -1250,7 +1345,7 @@ class Analise:
         self.pdf.line(130.0, 265.0, 130.0, 285.0)
         self.pdf.set_xy(135.0, 270.0)
         self.pdf.cell(w=40, txt='Revisado pela Gerência: ')
-        self.pdf.image('Mari.png', x=7.0, y=270.0, h=15.0, w=50.0)
+        self.pdf.image('G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Mari.png', x=7.0, y=265.0, h=25.0, w=45.0)
         troca = self.proc.get().replace('/', '-')
         path = '\\\GBD_VT1NTAQA\Data2\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\'
         self.pdf.output(path + 'Análise Tributária - ' + troca + '.pdf', 'F')
@@ -1261,3 +1356,4 @@ if __name__=='__main__':
     janela = Tk()
     aplicacao = Analise(janela)
     janela.mainloop()
+
