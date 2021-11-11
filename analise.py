@@ -13,6 +13,7 @@ from PyPDF2 import PdfFileWriter, PdfFileReader
 import win32com.client as win32
 from openpyxl.reader.excel import load_workbook
 import pickle
+from PIL import Image, ImageTk
 
 class Analise:
 
@@ -20,19 +21,20 @@ class Analise:
         self.janela = janela
         titulo = ' '
         self.janela.title(110 * titulo + 'Consultas')
-        self.janela.geometry('800x500+350+100')
+        self.janela.geometry('1200x700+350+100')
         self.janela.resizable(width=False, height=False)
 
-        j = 0
-        r = 0
-        for i in range(800):
-            c = str(222222 + r)
-            Frame(self.janela, width=10, height=500, bg='#' + c).place(x=j, y=0)
-            j += 10
-            r += 1
+        # j = 0
+        # r = 0
+        # for i in range(800):
+        #     c = str(222222 + r)
+        #     Frame(self.janela, width=10, height=500, bg='#' + c).place(x=j, y=0)
+        #     j += 10
+        #     r += 1
 
         self.frame1 = Frame(self.janela, width=700, height=400, bd=7, bg='white', relief=RIDGE)
         self.frame1.place(x=50, y=50)
+
 
         lblini = Label(self.frame1, text='ANÁLISE TRIBUTÁRIA', font=('arial', 26, 'bold'), bd=0, bg='white'). \
             place(x=155, y=30)
@@ -41,11 +43,12 @@ class Analise:
 
         btn1 = Button(self.frame1, text='Análises \nPendentes', font=('arial', 16, 'bold'), bg='#FF5733',
                       fg='white', bd=4, width=12, justify=CENTER, command=self.pendentes).place(x=30, y=180)
+
         btn2 = Button(self.frame1, text='Nova \nAnálise', font=('arial', 16, 'bold'), width=12, bg='#FF5733', bd=4,
                       fg='white', command= lambda:[self.tela_principal(), self.tela_servicos(),
                     self.servicos.withdraw(), self.tela_materiais(), self.materiais.withdraw(),
                     self.tela_observacoes(), self.observacoes.withdraw(), self.tela_contratos(),
-                                                   self.contratos.withdraw()]).place(x=250, y=180)
+                                                   self.contratos.withdraw(), self.janela.withdraw()]).place(x=250, y=180)
 
         btn3 = Button(self.frame1, text='Carregar \nAnálise', font=('arial', 16, 'bold'), bg='#FF5733',
                       fg='white', bd=4, width=12, justify=CENTER, command=lambda:[self.carregar_analise(),
@@ -209,7 +212,7 @@ class Analise:
             email = outlook.CreateItem(0)
 
             # configurar as informações do seu e-mail
-            email.To = "loliveira@gasbrasiliano.com.br"
+            email.To = "mmsilva@gasbrasiliano.com.br"
             email.Subject = "E-mail automático Análise Tributária"
             email.HTMLBody = f"""
                         <p>Análise(s) Tributária(s) assinada(s) com sucesso.</p>
@@ -243,7 +246,7 @@ class Analise:
                     email = outlook.CreateItem(0)
 
                     # configurar as informações do seu e-mail
-                    email.To = "loliveira@gasbrasiliano.com.br"
+                    email.To = "mmsilva@gasbrasiliano.com.br"
                     email.Subject = "E-mail automático Análise Tributária"
                     email.HTMLBody = f"""
                                             <p>Análise Tributária foi recusada.</p>
@@ -415,12 +418,12 @@ class Analise:
                     cont += 1
                 cont = 0
             self.linha_serv.insert(0, temp_list[int(verinfo3)][17])
-            self.obs.insert(1.0, temp_list[int(verinfo3)][18].strip())
-            self.obs_serv.insert(1.0, temp_list[int(verinfo3)][19])
+            self.obs.insert(1.0, temp_list[int(verinfo3)][18].strip().strip())
+            self.obs_serv.insert(1.0, temp_list[int(verinfo3)][19].strip())
             self.obs1.insert(1.0, temp_list[int(verinfo3)][20].strip())
             self.obs2.insert(1.0, temp_list[int(verinfo3)][21].strip())
             for n, i in enumerate(temp_list[int(verinfo3)][22]):
-                self.infos[n].insert(1.0, i)
+                self.infos[n].insert(1.0, i.strip())
                 print(i)
             for n, i in enumerate(temp_list[int(verinfo3)][23]):
                 if i == 1:
@@ -551,12 +554,14 @@ class Analise:
 
         def busca_servico(ev):
             self.path = 'G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\'
-            data_serv = pd.read_excel(self.path + 'material.xlsx', sheet_name='116')
+            data_serv = pd.read_excel(self.path + 'material.xlsx', sheet_name='116', dtype=str)
             data_serv = pd.DataFrame(data_serv)
             for index, row in data_serv.iterrows():
                 if self.cod_serv.get() == row['servico']:
                     self.serv.delete(1.0, END)
                     self.serv.insert(INSERT, row['servico'] + ' - ' + data_serv.loc[index, 'descricao'] + '\n')
+                    self.serv.insert(INSERT, '\n')
+                    self.serv.insert(INSERT, data_serv.loc[index, 'obs'] + '\n')
                     self.serv.insert(INSERT, '\n')
                     self.serv.insert(INSERT, data_serv.loc[index, 'irrf'] + '\n')
                     self.serv.insert(INSERT, data_serv.loc[index, 'crf'] + '\n')
@@ -986,6 +991,10 @@ class Analise:
                              command=lambda:[self.principal.deiconify(), self.contratos.withdraw()]).\
             grid(row=28, column=1, pady=10, padx=20)
 
+        self.voltar = Button(inner_frame, font=self.fonte, text='Tela Inicial', bd=4,
+                             command=lambda: [self.janela.deiconify(), self.contratos.withdraw()]). \
+            grid(row=29, column=1, pady=10, padx=20)
+
         self.gerar = Button(inner_frame, font=self.fonte, text='Gerar PDF', bd=4,
                               command=self.salvar).grid(row=28, column=2, pady=30)
 
@@ -1040,6 +1049,11 @@ class Analise:
                          'Obs 2: Essa Análise não é exaustiva, podendo sofrer alterações no decorrer do processo de '
                          'contratação em relação ao produto/serviço.')
 
+        Label(self.obs_frame, text='Quebra', font=('arial', 10, 'bold'), bd=0).place(x=990, y=490)
+        self.linha_obs = Entry(self.obs_frame, font=('arial', 10, 'bold'), bd=2, width=3)
+        self.linha_obs.place(x=1000, y=510)
+        self.linha_obs.insert(0, 0)
+
         self.chama_princ2 = Button(self.obs_frame1, font=('arial', 14, 'bold'), text='Dados Iniciais', bd=3, width=20,
                                   command=lambda: [self.principal.deiconify(), self.observacoes.withdraw()]).place(x=20,
                                                                                                                  y=2)
@@ -1053,7 +1067,7 @@ class Analise:
                                                  self.principal.withdraw()]).place(x=520, y=2)
 
         self.chama_contr3 = Button(self.obs_frame1, font=('arial', 14, 'bold'), text='Clausulas', bd=3, width=20,
-                                   command=lambda: [self.tela_contratos(), self.observacoes.withdraw(),
+                                   command=lambda: [self.contratos.deiconify(), self.observacoes.withdraw(),
                                                     self.principal.withdraw()]).place(x=770, y=2)
 
 
@@ -1197,7 +1211,7 @@ class Analise:
         self.pdf.set_font('')
         self.pdf.cell(w=40, h=5, txt=self.valor.get())
         self.pdf.set_font('arial', 'B', 10)
-        self.pdf.set_xy(15.0, self.pdf.get_y() + 10)
+        self.pdf.set_xy(15.0, self.pdf.get_y() + 5)
         self.pdf.cell(w=40, h=5, txt=self.complem.get(1.0, END))
         self.pdf.set_xy(15.0, self.pdf.get_y() + 10)
 
@@ -1207,8 +1221,11 @@ class Analise:
         # ======================================= MATERIAIS =================================#
 
         if len(self.data_mat) > 1:
-            self.pdf.set_xy(10, self.pdf.get_y() + 5)
-            if self.pdf.get_y() > 276:
+            # self.pdf.set_xy(10, self.pdf.get_y() + 5)
+            # if self.pdf.get_y() > 276:
+            #     self.pdf.rect(5.0, 5.0, 200.0, 280.0)
+            self.pdf.set_y(self.pdf.get_y() + (float(self.linha_mat.get()) * 5))
+            if int(self.linha_mat.get()) > 0:
                 self.pdf.rect(5.0, 5.0, 200.0, 280.0)
 
 
@@ -1298,12 +1315,12 @@ class Analise:
         if self.iva.get() != '':
 
 
-            self.pdf.set_y(self.pdf.get_y() + (float(self.linha_serv.get()) * 10))
+            self.pdf.set_y(self.pdf.get_y() + (float(self.linha_serv.get()) * 5))
             if int(self.linha_serv.get()) > 0:
                 self.pdf.add_page()
                 self.pdf.rect(5.0, 5.0, 200.0, 280.0)
 
-            self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
+            self.pdf.set_xy(10.0, self.pdf.get_y())
             q2 = self.pdf.get_y()
             print(q2)
             self.pdf.multi_cell(w=180, h=5,
@@ -1404,11 +1421,16 @@ class Analise:
         #     self.pdf.rect(5.0, 5.0, 200.0, 280.0)
         # else:
         #     pass
+        self.pdf.set_y(self.pdf.get_y() + (float(self.linha_obs.get()) * 5))
+        if int(self.linha_obs.get()) > 0:
+            self.pdf.rect(5.0, 5.0, 200.0, 280.0)
+
         self.pdf.rect(5.0, 5.0, 200.0, 280.0)
         self.pdf.set_font('')
         self.pdf.multi_cell(w=180, h=5, txt=self.obs1.get(1.0, 'end'))
         self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
         self.pdf.multi_cell(w=180, h=5, txt=self.obs2.get(1.0, 'end'))
+        self.pdf.rect(5.0, 5.0, 200.0, 280.0)
 
         #=============================  INFORMAÇÕES CONTRATUAIS ===========================================#
         # print(self.pdf.get_y())
@@ -1452,7 +1474,7 @@ class Analise:
         self.pdf.line(130.0, 265.0, 130.0, 285.0)
         self.pdf.set_xy(135.0, 270.0)
         self.pdf.cell(w=40, txt='Revisado pela Gerência: ')
-        self.pdf.image('G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Mari.png', x=7.0, y=265.0, h=25.0, w=45.0)
+        self.pdf.image('G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Mari1.png', x=7.0, y=265.0, h=25.0, w=45.0)
         troca = self.proc.get().replace('/', '-')
         path = '\\\GBD_VT1NTAQA\Data2\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\'
         self.pdf.output(path + 'Análise Tributária - ' + troca + '.pdf', 'F')
