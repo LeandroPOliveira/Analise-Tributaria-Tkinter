@@ -6,8 +6,7 @@ from tkinter import messagebox
 import tkinter
 from tkscrolledframe import ScrolledFrame
 import pandas as pd
-from datetime import date
-import datetime
+from datetime import date, datetime
 import glob
 from reportlab.pdfgen import canvas
 from PyPDF2 import PdfFileWriter, PdfFileReader
@@ -94,7 +93,7 @@ class Analise:
 
         self.lista = []
         # lista = [['DV-004-2021', '29/09/2021'], ['IN-006-2021', '30/09/2021']]
-        self.pasta1 = os.listdir('\\\GBD_VT1NTAQA\Data2\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes')
+        self.pasta1 = os.listdir('G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes')
         self.pasta = []
         for item in self.pasta1:
             if item.endswith('.pdf') is True and item != 'watermark.pdf':
@@ -103,8 +102,8 @@ class Analise:
 
 
         for i, n in enumerate(self.pasta):
-            mod = os.path.getctime('\\\GBD_VT1NTAQA\Data2\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes')
-            mod = datetime.datetime.fromtimestamp(mod)
+            mod = os.path.getctime('G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes')
+            mod = datetime.fromtimestamp(mod)
             data = date.strftime(mod, '%d/%m/%Y')
             self.lista.append([])
             self.lista[i].append(n)
@@ -123,33 +122,49 @@ class Analise:
                     nf_tree.insert(parent='', index='end', text='', iid=contagem,
                                    values=(row[0], row[1]), tags=('oddrow',))
                 contagem += 1
+
+
             py = 115
             self.list_check = []
             for lin in self.lista:
                 self.check1 = IntVar()
                 lbl1 = Checkbutton(self.pendente, var=self.check1, onvalue=1, offvalue=0)
                 lbl1.place(y=py, x=138)
-
                 py += 26
                 self.list_check.append(self.check1)
 
 
+
+        # Create the watermark from an image
+        c = canvas.Canvas('G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\watermark.pdf')
+        # Draw the image at x, y. I positioned the x,y to be where i like here
+        c.drawImage('G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Paulo.png', 440, 30, 100, 60, mask='auto')
+        c.save()
+        # Get the watermark file you just created
+        watermark = PdfFileReader(open("G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\watermark.pdf", "rb"))
+        # Get our files ready
+
+
+
         def assinatura():
-            caminho = '\\\GBD_VT1NTAQA\Data2\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\'
+            caminho = 'G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\'
+            self.salvos = []
             for n, arquivo in enumerate(self.pasta):
                 if self.list_check[n].get() == 1:
-                    dir_atual = '\\\GBD_VT1NTAQA\Data2\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\'
+                    dir_atual = 'G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\'
                     os.chdir(dir_atual)
 
-                    # Create the watermark from an image
-                    c = canvas.Canvas('watermark.pdf')
-                    # Draw the image at x, y. I positioned the x,y to be where i like here
-                    c.drawImage('Paulo.png', 440, 30, 100, 60, mask='auto')
-                    c.save()
-                    # Get the watermark file you just created
-                    watermark = PdfFileReader(open("watermark.pdf", "rb"))
-                    # Get our files ready
-                    output_file = PdfFileWriter()
+                    # if n == 0:
+                    #     # Create the watermark from an image
+                    #     c = canvas.Canvas('watermark.pdf')
+                    #     # Draw the image at x, y. I positioned the x,y to be where i like here
+                    #     c.drawImage('Paulo.png', 440, 30, 100, 60, mask='auto')
+                    #     c.save()
+                    #     # Get the watermark file you just created
+                    #     watermark = PdfFileReader(open("watermark.pdf", "rb"))
+                    #     # Get our files ready
+                    #     output_file = PdfFileWriter()
+                    self.output_file = PdfFileWriter()
                     with open(caminho + arquivo, "rb") as f:
                         input_file = PdfFileReader(f, "rb")
                         # Number of pages in input document
@@ -160,26 +175,34 @@ class Analise:
                             input_page = input_file.getPage(page_number)
                             if page_number == page_count - 1:
                                 input_page.mergePage(watermark.getPage(0))
-                            output_file.addPage(input_page)
+                            self.output_file.addPage(input_page)
 
                         # dir = os.getcwd()
-                        path = '\\\GBD_VT1NTAQA\Data2\GECOT\Análise Contábil_Tributária_Licitações\\2021'
+                        path = 'G:\GECOT\Análise Contábil_Tributária_Licitações\\2021'
                         os.chdir(path)
                         file = glob.glob(str(arquivo[21:32]) + '*')
                         file = ''.join(file)
                         try:
                             os.chdir(file)
                         except:
-                            os.chdir('\\\GBD_VT1NTAQA\Data2\GECOT\Análise Contábil_Tributária_Licitações\\2021')
+                            os.chdir(path)
 
                         # finally, write "output" to document-output.pdf
-                        with open('Análise Tributária - ' + str(arquivo[21:32]) + '.pdf', "wb") as outputStream:
-                            output_file.write(outputStream)
+                        with open('Análise Tributária - ' + str(arquivo[21:]), "wb") as outputStream:
+                            self.output_file.write(outputStream)
 
                     os.chdir(caminho)
                     os.remove(arquivo)
-                    self.pasta.pop(n)
-                    self.lista.pop(n)
+                    self.salvos.append(n)
+
+
+            troca = 0
+            for i in self.salvos:
+                self.pasta.pop(i-troca)
+                self.lista.pop(i-troca)
+                troca += 1
+
+
             outlook = win32.Dispatch('outlook.application')
 
             # criar um email
@@ -195,13 +218,13 @@ class Analise:
 
             email.Send()
             tkinter.messagebox.showinfo('', 'Análise(s) assinada(s) com sucesso!')
+            # self.pendente.update()
             self.pendente.lift()
 
-            self.list_check.clear()
 
+            self.list_check.clear()
             inserir_tree(self.lista)
-            # nf_tree.delete(*nf_tree.get_children())
-            # nf_tree.insert(parent='', index='end')
+
 
 
         def recusa():
@@ -288,10 +311,11 @@ class Analise:
         colunas2 = ['Análise', 'Data']
         nf_tree1['columns'] = colunas2
         # formatar colunas
-        nf_tree1.column('Análise', width=350)
-        nf_tree1.column('Data', width=100)
+        nf_tree1.column('Análise', width=200)
+        nf_tree1.column('Data', width=200)
 
         # formatar títulos
+        estilo.configure("Treeview.Heading", font=('arial', 11), background='DodgerBlue3', foreground='white')
         nf_tree1.heading('Análise', text='Análise', anchor=W)
         nf_tree1.heading('Data', text='Data', anchor=W)
 
@@ -314,20 +338,26 @@ class Analise:
         def inserir_tree(lista):
             nf_tree1.delete(*nf_tree1.get_children())
             contagem = 0
+            lista.sort(key=lambda lista: datetime.strptime(lista[1], '%d/%m/%Y, %H:%M:%S'), reverse=True)
+            print(lista)
             for row in lista:  # loop para inserir cores diferentes nas linhas
                 if contagem % 2 == 0:
                     nf_tree1.insert(parent='', index='end', text='', iid=contagem,
-                                   values=(row[0], row[1]), tags=('evenrow',))
+                                    values=(row[0], row[1]), tags=('evenrow',))
                 else:
                     nf_tree1.insert(parent='', index='end', text='', iid=contagem,
-                                   values=(row[0], row[1]), tags=('oddrow',))
+                                    values=(row[0], row[1]), tags=('oddrow',))
                 contagem += 1
+
+
+
+
 
         def NotasInfo2(ev):
             # fn_id.delete(0, END)
             verinfo3 = nf_tree1.focus()
             dados3 = nf_tree1.item(verinfo3)
-
+            temp_list.sort(key=lambda lista: datetime.strptime(lista[0], '%d/%m/%Y, %H:%M:%S'), reverse=True)
             self.gere.delete(0, END)
             self.proc.delete(0, END)
             self.req.delete(0, END)
@@ -344,8 +374,11 @@ class Analise:
             self.iva.delete(0, END)
             self.linha_serv.delete(0, END)
             self.obs.delete(1.0, END)
+            self.obs_serv.delete(1.0, END)
             self.obs1.delete(1.0, END)
             self.obs2.delete(1.0, END)
+            [i.delete(1.0, END) for i in self.infos]
+            # [i.deselect() for i in self.var_check]
             self.gere.insert(0, temp_list[int(verinfo3)][1])
             self.proc.insert(0, temp_list[int(verinfo3)][2])
             self.req.insert(0, temp_list[int(verinfo3)][3])
@@ -354,9 +387,9 @@ class Analise:
             self.tipo1.set(int(temp_list[int(verinfo3)][6]))
             self.tipo2.set(int(temp_list[int(verinfo3)][7]))
             self.tipo3.set(int(temp_list[int(verinfo3)][8]))
-            self.objeto.insert(1.0, temp_list[int(verinfo3)][9])
+            self.objeto.insert(1.0, temp_list[int(verinfo3)][9].strip())
             self.valor.insert(0, temp_list[int(verinfo3)][10])
-            self.complem.insert(1.0, temp_list[int(verinfo3)][11])
+            self.complem.insert(1.0, temp_list[int(verinfo3)][11].strip())
             for r, val in enumerate(temp_list[int(verinfo3)][12][1:]):
                 print(val)
                 for b, value in enumerate(val):
@@ -365,19 +398,33 @@ class Analise:
                     self.lista_mat[b][r].insert(0, value)
 
             self.linha_mat.insert(0, temp_list[int(verinfo3)][13])
-            self.serv.insert(1.0, temp_list[int(verinfo3)][14])
+            self.serv.insert(1.0, temp_list[int(verinfo3)][14].strip())
             self.iva.insert(0, temp_list[int(verinfo3)][15])
+            cont = 0
             for r, val in enumerate(temp_list[int(verinfo3)][16][1:]):
-                print(val)
                 for b, value in enumerate(val):
-                    print(value)
-                    self.lista[b][r].delete(0, END)
-                    self.lista[b][r].insert(0, value)
+                    if cont == 0:
+                        self.lista[b+1][r].delete(0, END)
+                        self.lista[b+1][r].insert(0, value)
+                    elif cont == 1:
+                        self.lista[b-1][r].delete(0, END)
+                        self.lista[b-1][r].insert(0, value)
+                    else:
+                        self.lista[b][r].delete(0, END)
+                        self.lista[b][r].insert(0, value)
+                    cont += 1
+                cont = 0
             self.linha_serv.insert(0, temp_list[int(verinfo3)][17])
-            self.obs.insert(1.0, temp_list[int(verinfo3)][18])
-            self.obs1.insert(1.0, temp_list[int(verinfo3)][19])
-            self.obs2.insert(1.0, temp_list[int(verinfo3)][20])
-
+            self.obs.insert(1.0, temp_list[int(verinfo3)][18].strip())
+            self.obs_serv.insert(1.0, temp_list[int(verinfo3)][19])
+            self.obs1.insert(1.0, temp_list[int(verinfo3)][20].strip())
+            self.obs2.insert(1.0, temp_list[int(verinfo3)][21].strip())
+            for n, i in enumerate(temp_list[int(verinfo3)][22]):
+                self.infos[n].insert(1.0, i)
+                print(i)
+            for n, i in enumerate(temp_list[int(verinfo3)][23]):
+                if i == 1:
+                    self.lista_check[n].set(1)
 
 
             self.carregar.destroy()
@@ -444,7 +491,7 @@ class Analise:
         self.tipoa.place(x=690, y=125)
         self.tipob = Checkbutton(info_frame, var=self.tipo2, onvalue=1, offvalue=0, text='Material', font=('arial', 12))
         self.tipob.place(x=690, y=155)
-        self.tipoc = Checkbutton(info_frame, var=self.tipo3, onvalue=1, offvalue=0, text='Material com Forn. Serviço',
+        self.tipoc = Checkbutton(info_frame, var=self.tipo3, onvalue=1, offvalue=0, text='Serviço com Fornc. Material',
                                  font=('arial', 12))
         self.tipoc.place(x=690, y=185)
         self.objeto = Text(info_frame2, width=50, height=5, bd=4, font='arial')
@@ -541,7 +588,7 @@ class Analise:
         # múltiplos serviços
         px = 265
         py = 255
-        for i in range(30):
+        for i in range(60):
             for c in range(3):
                 if c == 1:
                     largura = 30
@@ -600,12 +647,13 @@ class Analise:
 
                     cont2 += 1
                     if cont2 == 3:
+                        ordem = [1, 0, 2]
+                        temp_list = [temp_list[i] for i in ordem]
                         lista_nova = temp_list.copy()
                         self.data.append(lista_nova)
                         temp_list.clear()
                         cont2 = 0
-            for i in self.data[1:]:
-                i.sort(key=len, reverse=True)
+
             for lin in self.entradas:
                 lin.delete(0, END)
 
@@ -885,11 +933,11 @@ class Analise:
         # Add a bunch of widgets to fill some space
         self.nomes = ['N/A', 'Minuta', 'Redação', '2.3.7.', '2.3.7.1', '2.3.7.2', '2.3.7.3', '2.3.7.4', '6.8.2', '15.1',
                       '3.10.1', '3.9-10-11', 'Anexo 2']
-        self.var_check = []
+        self.lista_check = []
         linha = 3
         for check in range(13):
-            self.var_check.append(IntVar())
-            check1 = Checkbutton(inner_frame, text=self.nomes[check], variable=self.var_check[check], onvalue=1,
+            self.lista_check.append(IntVar())
+            check1 = Checkbutton(inner_frame, text=self.nomes[check], variable=self.lista_check[check], onvalue=1,
                                  offvalue=0, bd=0, font=('arial', 14))
             check1.grid(row=linha, column=1, padx=70)
             linha += 2
@@ -962,22 +1010,32 @@ class Analise:
         self.obs_frame1 = Frame(self.observacoes, width=1080, height=70, relief=RIDGE, bd=7)
         self.obs_frame1.place(x=10, y=590)
 
-        Label(self.obs_frame, text='Obs. 1: ', font=self.fonte, bd=0).place(x=150, y=200)
-        Label(self.obs_frame, text='Obs. 2: ', font=self.fonte, bd=0).place(x=150, y=350)
+        Label(self.obs_frame, text='Obs. Materiais: ', font=self.fonte, bd=0).place(x=100, y=50)
+        Label(self.obs_frame, text='Obs. Serviços: ', font=self.fonte, bd=0).place(x=100, y=180)
+        Label(self.obs_frame, text='Obs. 1: ', font=self.fonte, bd=0).place(x=100, y=320)
+        Label(self.obs_frame, text='Obs. 2: ', font=self.fonte, bd=0).place(x=100, y=470)
 
-        self.obs = Text(self.obs_frame, width=45, height=6, bd=4, font='arial', wrap=WORD)
+
+        self.obs = Text(self.obs_frame, width=75, height=6, bd=4, font='arial', wrap=WORD)
         self.obs.place(x=250, y=50)
+        self.obs.insert(1.0, 'Produto para Consumo Final. \nFabricante: Alíquota de ICMS de 18% conforme RICMS-SP/2000, '
+                             'Livro I, Título III, Capítulo II, Seção II, Artigo 52, Inciso I \nRevendedor: Informar o '
+                             'ICMS-ST  recolhido anteriormente\n\nEntrega de materiais em local diverso do destinatário: '
+                             'o endereço deverá constar na nota fiscal em campo específico do xml (bloco G) e em dados '
+                             'adicionais. (Regime Especial 28558/2018).')
 
+        self.obs_serv = Text(self.obs_frame, width=75, height=6, bd=4, font='arial', wrap=WORD)
+        self.obs_serv.place(x=250, y=180)
 
-        self.obs1 = Text(self.obs_frame, width=45, height=6, bd=4, font='arial', wrap=WORD)
-        self.obs1.place(x=250, y=200)
+        self.obs1 = Text(self.obs_frame, width=75, height=6, bd=4, font='arial', wrap=WORD)
+        self.obs1.place(x=250, y=320)
         self.obs1.insert(1.0,
                          'Obs 1: Caso o fornecedor possua alguma especificidade que implique tratamento tributário diverso '
                          'do exposto acima, ou seja do regime tributário "SIMPLES NACIONAL" deverá  apresentar '
                          'documentação hábil que comprove sua condição peculiar, a qual será alvo de análise '
                          'prévia pela GECOT.')
-        self.obs2 = Text(self.obs_frame, width=45, height=3, bd=4, font='arial', wrap=WORD)
-        self.obs2.place(x=250, y=350)
+        self.obs2 = Text(self.obs_frame, width=75, height=3, bd=4, font='arial', wrap=WORD)
+        self.obs2.place(x=250, y=470)
         self.obs2.insert(1.0,
                          'Obs 2: Essa Análise não é exaustiva, podendo sofrer alterações no decorrer do processo de '
                          'contratação em relação ao produto/serviço.')
@@ -1004,15 +1062,55 @@ class Analise:
     def salvar(self):
         # ============================== GUARDAR DADOS ========================================#
         dados_salvos = []
-        dados_salvos.extend([date.today().strftime('%d/%m/%Y %H:%M'), self.gere.get(), self.proc.get(), self.req.get(),
-                             self.orcam.get(), self.objcust.get(),
-                             self.tipo1.get(), self.tipo2.get(), self.tipo3.get(), self.objeto.get(1.0, END), self.valor.get(), self.complem.get(1.0, END),
-                             self.data_mat,
-                            self.linha_mat.get(), self.serv.get(1.0, END), self.iva.get(), self.data, self.linha_serv.get(),
-                             self.obs.get(1.0, END), self.obs1.get(1.0, END), self.obs2.get(1.0, END)])
+        dados_salvos.extend([datetime.now().strftime('%d/%m/%Y, %H:%M:%S'), self.gere.get(), self.proc.get(),
+                             self.req.get(), self.orcam.get(), self.objcust.get(), self.tipo1.get(), self.tipo2.get(),
+                             self.tipo3.get(), self.objeto.get(1.0, END), self.valor.get(), self.complem.get(1.0, END),
+                             self.data_mat, self.linha_mat.get(), self.serv.get(1.0, END), self.iva.get(),
+                             self.data, self.linha_serv.get(), self.obs.get(1.0, END), self.obs_serv.get(1.0, END),
+                             self.obs1.get(1.0, END), self.obs2.get(1.0, END), [i.get(1.0, END) for i in self.infos],
+                             [i.get() for i in self.lista_check]])
 
-        with open("G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Base.txt", "ab") as fp:  # Pickling
-            pickle.dump(dados_salvos, fp)
+        with open("G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Base.txt",
+                  "rb+") as fp:  # Pickling
+            pickle_list = []
+            nova_lista = []
+            while True:
+                try:
+                    pickle_list.append(pickle.load(fp))
+                except EOFError:
+                    break
+            for i in pickle_list:
+                if i[2] != dados_salvos[2]:
+                    nova_lista.append(i)
+        with open("G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Base.txt", "wb") as fp:
+            nova_lista.append(dados_salvos)
+            for lis in nova_lista:
+                pickle.dump(lis, fp)
+
+
+
+
+
+        # with open("G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Base.txt", "rb") as fp:  # Pickling
+        #     pickle_list = []
+        #     nova_lista = []
+        #     while True:
+        #         try:
+        #             pickle_list.append(pickle.load(fp))
+        #         except EOFError:
+        #             break
+            # for i in pickle_list:
+            #     if len(pickle_list) > 1:
+            #         if i[2] != dados_salvos[2]:
+            #             nova_lista.append(i)
+            #     else:
+            #         pickle_list = pickle_list[0]
+            #         for i in pickle_list:
+            #             if i[2] != dados_salvos[2]:
+            #                 nova_lista.append(i)
+            #
+            # nova_lista.append(dados_salvos)
+            # pickle.dump(nova_lista, fp)
 
 
         # ============================== CRIAR PDF ============================================#
@@ -1099,9 +1197,9 @@ class Analise:
         self.pdf.set_font('')
         self.pdf.cell(w=40, h=5, txt=self.valor.get())
         self.pdf.set_font('arial', 'B', 10)
-        self.pdf.set_xy(15.0, self.pdf.get_y() + 5)
+        self.pdf.set_xy(15.0, self.pdf.get_y() + 10)
         self.pdf.cell(w=40, h=5, txt=self.complem.get(1.0, END))
-        self.pdf.set_xy(15.0, self.pdf.get_y() + 5)
+        self.pdf.set_xy(15.0, self.pdf.get_y() + 10)
 
         self.pdf.set_auto_page_break(True, 20.0)
         # self.pdf.set_auto_page_break(True, 20.0)
@@ -1187,9 +1285,10 @@ class Analise:
 
             self.pdf.rect(7.5, q1 - 3, 195, self.pdf.get_y() - q1 + 7.5)
             self.pdf.set_xy(10.0, self.pdf.get_y() + 10)
-
+            self.pdf.set_font('Arial', 'U', 10)
             self.pdf.multi_cell(w=180, h=5, txt=self.obs.get(1.0, 'end'))
             self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
+            self.pdf.set_font('')
             self.pdf.rect(5.0, 5.0, 200.0, 280.0)
         # ======================================== SERVIÇOS =============================================#
 
@@ -1198,11 +1297,13 @@ class Analise:
 
         if self.iva.get() != '':
 
+
             self.pdf.set_y(self.pdf.get_y() + (float(self.linha_serv.get()) * 10))
             if int(self.linha_serv.get()) > 0:
                 self.pdf.add_page()
                 self.pdf.rect(5.0, 5.0, 200.0, 280.0)
 
+            self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
             q2 = self.pdf.get_y()
             print(q2)
             self.pdf.multi_cell(w=180, h=5,
@@ -1244,11 +1345,13 @@ class Analise:
                 cont_lista += 1
                 if py > 270:
                     self.dados_faltantes = self.data[cont_lista:]
+                    self.pdf.rect(7.5, q2 - 3, 195.0, self.pdf.get_y() - q2 + 7.5)
                     self.pdf.add_page()
                     self.pdf.rect(5.0, 5.0, 200.0, 280.0)
                     break
 
             if self.dados_faltantes:
+                q2 = self.pdf.get_y()
                 self.dados_faltantes.insert(0, ['DESCRIÇÃO', 'CÓDIGO', 'C.C'])
                 cont = 3
                 px = 10
@@ -1288,6 +1391,9 @@ class Analise:
             self.pdf.multi_cell(w=180, h=5, txt=self.serv.get(1.0, 'end'))
             self.pdf.rect(7.5, q2 - 3, 195.0, self.pdf.get_y() - q2 + 7.5)
             self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
+            self.pdf.multi_cell(w=180, h=5, txt=self.obs_serv.get(1.0, 'end'))
+            self.pdf.set_xy(10.0, self.pdf.get_y() + 5) if self.obs_serv.get(1.0, 'end') != '' else \
+                self.pdf.set_xy(10.0, self.pdf.get_y())
             self.pdf.rect(5.0, 5.0, 200.0, 280.0)
 
 
@@ -1298,9 +1404,8 @@ class Analise:
         #     self.pdf.rect(5.0, 5.0, 200.0, 280.0)
         # else:
         #     pass
-
+        self.pdf.rect(5.0, 5.0, 200.0, 280.0)
         self.pdf.set_font('')
-
         self.pdf.multi_cell(w=180, h=5, txt=self.obs1.get(1.0, 'end'))
         self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
         self.pdf.multi_cell(w=180, h=5, txt=self.obs2.get(1.0, 'end'))
@@ -1313,12 +1418,14 @@ class Analise:
         # else:
         #     pass
         self.pdf.set_y(self.pdf.get_y() + (float(self.linha_cont.get())*10))
-
-
-        self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
-        self.pdf.cell(w=40, h=5, txt='Informações Contratuais : ')
-        self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
-        for i, item in enumerate(self.var_check):
+        total = 0
+        for l in self.lista_check:
+            total += l.get()
+        if total > 0:
+            self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
+            self.pdf.cell(w=40, h=5, txt='Informações Contratuais : ')
+            self.pdf.set_xy(10.0, self.pdf.get_y() + 5)
+        for i, item in enumerate(self.lista_check):
             if item.get() == 1:
                 self.pdf.set_xy(15.0, self.pdf.get_y() + 5)
                 self.pdf.multi_cell(w=180, h=5, align='L', txt=self.infos[i].get(1.0, 'end'))
@@ -1349,6 +1456,7 @@ class Analise:
         troca = self.proc.get().replace('/', '-')
         path = '\\\GBD_VT1NTAQA\Data2\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\'
         self.pdf.output(path + 'Análise Tributária - ' + troca + '.pdf', 'F')
+        os.startfile(path + 'Análise Tributária - ' + troca + '.pdf')
 
 
 

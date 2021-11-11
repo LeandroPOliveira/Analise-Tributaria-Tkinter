@@ -1,26 +1,82 @@
 import pandas as pd
 from openpyxl.reader.excel import load_workbook
 import pickle
+from datetime import datetime
+from operator import itemgetter
+from PyPDF2 import PdfFileWriter, PdfFileReader
+import os
+import glob
+from reportlab.pdfgen import canvas
+import time
+import concurrent.futures
 
 
-# lista = ['01/01/2021', 'GETIN', 'DV-015/2021', '10199999', 'Sim', '11330', '1', 'Serviço de BUNDA.\n', 'R$ 50.000,00', '\n', [['CÓDIGO', 'DESCRIÇÃO', 'IVA', 'NCM', 'ICMS', 'IPI', 'PIS', 'COFINS'], ['2450', 'BUNDA', 'Y0', '7400.00', '18', '5', '7,6', '1,65']], '0', '', 'Y0', [['DESCRIÇÃO', 'CÓDIGO', 'C.C'], ['bunda', '1000', '4598']], '0', '\n', 'Obs 1: Caso o BUNDA possua alguma especificidade que implique tratamento tributário diverso do exposto acima, ou seja do regime tributário "SIMPLES NACIONAL" deverá  apresentar documentação hábil que comprove sua condição peculiar, a qual será alvo de análise prévia pela GECOT.\n', 'Obs 2: Essa BUNDA não é exaustiva, podendo sofrer alterações no decorrer do processo de contratação em relação ao produto/serviço.\n']
-# lista2 = ['10/08/2021', 'GEOPE', 'DV-124/2021', '10193535', 'Sim', '11440', '1', 'Serviço de Segurança Eletrônica 24 horas e Pronta Intervenção na EO e ECP São Carlos, com o fornecimento e instalação de equipamentos.\n', 'R$ 49.915,00', '\n', [['CÓDIGO', 'DESCRIÇÃO', 'IVA', 'NCM', 'ICMS', 'IPI', 'PIS', 'COFINS']], '0', '', 'ZJ', [['DESCRIÇÃO', 'CÓDIGO', 'C.C']], '0', '\n', 'Obs 1: Caso o fornecedor possua alguma especificidade que implique tratamento tributário diverso do exposto acima, ou seja do regime tributário "SIMPLES NACIONAL" deverá  apresentar documentação hábil que comprove sua condição peculiar, a qual será alvo de análise prévia pela GECOT.\n', 'Obs 2: Essa Análise não é exaustiva, podendo sofrer alterações no decorrer do processo de contratação em relação ao produto/serviço.\n']
-# # book = load_workbook('G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Base.xlsx')
-# # # writer = pd.ExcelWriter('G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Base.xlsx',
-# # #                         engine='openpyxl')
-# # # writer.book = book
-# # ws = book.worksheets[0]
-# # tabela = pd.DataFrame(lista).transpose()
+lista = []
+# lista = [['DV-004-2021', '29/09/2021'], ['IN-006-2021', '30/09/2021']]
+pasta1 = os.listdir('G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\')
+pasta = []
+for item in pasta1:
+    if item.endswith('.pdf') is True and item != 'watermark.pdf':
+        pasta.append(item)
+
+caminho = 'G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\'
+salvos = []
+for n, arquivo in enumerate(pasta):
+
+    dir_atual = 'G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\'
+    os.chdir(dir_atual)
+
+    start_time = time.time()
+    if n == 0:
+        # Create the watermark from an image
+        c = canvas.Canvas('watermark.pdf')
+        # Draw the image at x, y. I positioned the x,y to be where i like here
+        c.drawImage('Paulo.png', 440, 30, 100, 60, mask='auto')
+        c.save()
+        # Get the watermark file you just created
+        watermark = PdfFileReader(open("watermark.pdf", "rb"))
+        # Get our files ready
+        output_file = PdfFileWriter()
+    with open(caminho + arquivo, "rb") as f:
+        input_file = PdfFileReader(f, "rb")
+        # Number of pages in input document
+        page_count = input_file.getNumPages()
+
+        # Go through all the input file pages to add a watermark to them
+        for page_number in range(page_count):
+            input_page = input_file.getPage(page_number)
+            if page_number == page_count - 1:
+                input_page.mergePage(watermark.getPage(0))
+            output_file.addPage(input_page)
+        print("--- %s seconds ---" % (time.time() - start_time))
+        # dir = os.getcwd()
+        path = 'G:\GECOT\Análise Contábil_Tributária_Licitações\\2021'
+        os.chdir(path)
+        file = glob.glob(str(arquivo[21:32]) + '*')
+        file = ''.join(file)
+        try:
+            os.chdir(file)
+        except:
+            os.chdir(path)
+
+        # finally, write "output" to document-output.pdf
+        with open('Análise Tributária - ' + str(arquivo[21:]) + '.pdf', "wb") as outputStream:
+            output_file.write(outputStream)
+
+    os.chdir(caminho)
+    # os.remove(arquivo)
+    # salvos.append(n)
+
+
+
+# troca = 0
+# for i in salvos:
+#     pasta.pop(i-troca)
 #
-# with open("G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Base.txt", "wb") as fp:   #Pickling
-#     pickle.dump(lista, fp)
-#     pickle.dump(lista2, fp)
+#     troca += 1
 
 
-
-with open("G:\GECOT\Análise Contábil_Tributária_Licitações\\2021\\1Pendentes\\Base.txt", "rb") as fp:   # Unpickling
-    b = pickle.load(fp)
-
-for i in b:
-    print(i)
-
+# for n, arquivo in enumerate(pasta):
+#     start_time = time.time()
+#     print(arquivo)
+#     print("--- %s seconds ---" % (time.time() - start_time))
