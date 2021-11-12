@@ -21,16 +21,16 @@ class Analise:
         self.janela = janela
         titulo = ' '
         self.janela.title(110 * titulo + 'Consultas')
-        self.janela.geometry('1200x700+350+100')
+        self.janela.geometry('800x500+350+100')
         self.janela.resizable(width=False, height=False)
 
-        # j = 0
-        # r = 0
-        # for i in range(800):
-        #     c = str(222222 + r)
-        #     Frame(self.janela, width=10, height=500, bg='#' + c).place(x=j, y=0)
-        #     j += 10
-        #     r += 1
+        j = 0
+        r = 0
+        for i in range(800):
+            c = str(222222 + r)
+            Frame(self.janela, width=10, height=500, bg='#' + c).place(x=j, y=0)
+            j += 10
+            r += 1
 
         self.frame1 = Frame(self.janela, width=700, height=400, bd=7, bg='white', relief=RIDGE)
         self.frame1.place(x=50, y=50)
@@ -936,11 +936,11 @@ class Analise:
         inner_frame = sf.display_widget(Frame)
 
         # Add a bunch of widgets to fill some space
-        self.nomes = ['N/A', 'Minuta', 'Redação', '2.3.7.', '2.3.7.1', '2.3.7.2', '2.3.7.3', '2.3.7.4', '6.8.2', '15.1',
-                      '3.10.1', '3.9-10-11', 'Anexo 2']
+        self.nomes = ['N/A', 'Minuta', 'Minuta 2', 'Redação', 'Redação 2', '2.3.7.', '2.3.7.1', '2.3.7.2', '2.3.7.3',
+                      '2.3.7.4', '6.7.2', '15.1', '3.10.1', '3.9-10-11', 'Anexo 2']
         self.lista_check = []
         linha = 3
-        for check in range(13):
+        for check in range(15):
             self.lista_check.append(IntVar())
             check1 = Checkbutton(inner_frame, text=self.nomes[check], variable=self.lista_check[check], onvalue=1,
                                  offvalue=0, bd=0, font=('arial', 14))
@@ -989,21 +989,21 @@ class Analise:
 
         self.voltar = Button(inner_frame, font=self.fonte, text='Voltar', bd=4,
                              command=lambda:[self.principal.deiconify(), self.contratos.withdraw()]).\
-            grid(row=28, column=1, pady=10, padx=20)
+            grid(row=32, column=1, pady=10, padx=20)
 
         self.voltar = Button(inner_frame, font=self.fonte, text='Tela Inicial', bd=4,
                              command=lambda: [self.janela.deiconify(), self.contratos.withdraw()]). \
-            grid(row=29, column=1, pady=10, padx=20)
+            grid(row=33, column=1, pady=10, padx=20)
 
         self.gerar = Button(inner_frame, font=self.fonte, text='Gerar PDF', bd=4,
-                              command=self.salvar).grid(row=28, column=2, pady=30)
+                              command=self.salvar).grid(row=32, column=2, pady=30)
 
         self.enviar = Button(inner_frame, font=self.fonte, text='Enviar Email', bd=4,
-                               command=enviar_email).grid(row=29, column=2, pady=10)
+                               command=enviar_email).grid(row=33, column=2, pady=10)
 
-        Label(inner_frame, text='Quebra', font=('arial', 10, 'bold'), bd=0).grid(row=29, column=3)
+        Label(inner_frame, text='Quebra', font=('arial', 10, 'bold'), bd=0).grid(row=32, column=3)
         self.linha_cont = Entry(inner_frame, font=('arial', 10, 'bold'), bd=2, width=3)
-        self.linha_cont.grid(row=30, column=3, pady=10)
+        self.linha_cont.grid(row=33, column=3)
         self.linha_cont.insert(0, 0)
 
 
